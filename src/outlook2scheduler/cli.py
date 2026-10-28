@@ -234,8 +234,9 @@ def _traiter(lien: str, cible: CibleSondage, ctx: Contexte, nom: str, actualisat
     creneaux = evaluer(sondage.creneaux, grille, ctx.regles, dep.fuseau, sondage.duree_creneau)
 
     avant = sondage.participants.get(nom) if nom else None
-    if avant is not None:
-        # Les créneaux déjà passés restent tels qu'en ligne : inutile de les réécrire.
+    if avant is not None and actualisation:
+        # Actualisation groupée : les créneaux passés restent tels qu'en ligne.
+        # (o2s.bat sur un seul sondage, lui, réécrit tout.)
         maintenant = dep.maintenant()
         creneaux = [
             replace(c, libre=i in avant, motif=Motif.PASSE)
@@ -261,7 +262,9 @@ def _traiter(lien: str, cible: CibleSondage, ctx: Contexte, nom: str, actualisat
             dep.sortie(formater_ecart(creneaux, avant, nom))
     disponibilites = [c.libre for c in creneaux]
 
-    if avant is not None and {i for i, d in enumerate(disponibilites) if d} == set(avant):
+    if avant is not None and not actualisation:
+        dep.sortie(f"Vos disponibilités déjà en ligne sous « {nom} » seront entièrement remplacées par cette version.")
+    if actualisation and avant is not None and {i for i, d in enumerate(disponibilites) if d} == set(avant):
         ctx.registre.enregistrer(sondage.url, sondage.titre, nom, sondage.fin, dep.maintenant())
         dep.sortie("Rien à envoyer.")
         return 0
@@ -391,7 +394,10 @@ def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
         return _actualiser(ctx, cibles)
 
     lien, cible = _obtenir_lien(args, cibles, dep)
-    return _traiter(lien, cible, ctx, (args.nom or config.nom).strip())
+    # Sondage déjà envoyé : on reprend le nom utilisé, pour écraser la même ligne.
+    deja = ctx.registre.trouver(cible.normaliser(lien))
+    nom = args.nom or (deja.nom if deja else "") or config.nom
+    return _traiter(lien, cible, ctx, nom.strip())
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -54,6 +54,9 @@ class Registre:
         entrees.append(EntreeSondage(url, titre, nom, fin, date_envoi))
         self._ecrire(entrees)
 
+    def trouver(self, url: str) -> EntreeSondage | None:
+        return next((e for e in self.lire() if e.url == url), None)
+
     def oublier(self, url: str) -> EntreeSondage | None:
         entrees = self.lire()
         restantes = [e for e in entrees if e.url != url]

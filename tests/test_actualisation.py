@@ -78,12 +78,31 @@ def test_ecart_affiche_puis_envoi(fuseau):
     assert "rechargez la page du sondage (F5)" in m.texte
 
 
-def test_deja_a_jour_rien_n_est_envoye(fuseau):
+def test_relance_o2s_ecrase_meme_si_deja_a_jour(fuseau):
+    m = Monde(fuseau, {"/?11111111-AaAaA": page(fuseau, LUNDI, [0, 1, 2, 3])}, reponses=["O"])
+    executer([URL1, "--nom", NOM, "--submit"], m.dep)
+    assert "Déjà à jour" in m.texte
+    assert "seront entièrement remplacées" in m.texte
+    assert m.questions == ["Envoyer ? (O/N) "]
+    assert m.envois() == [("11111111", "1111")]
+
+
+def test_actualiser_deja_a_jour_rien_n_est_envoye(fuseau):
+    Registre().enregistrer(URL1, "Point projet", NOM, 2_000_000_000, 0)
     m = Monde(fuseau, {"/?11111111-AaAaA": page(fuseau, LUNDI, [0, 1, 2, 3])})
-    assert executer([URL1, "--nom", NOM, "--submit"], m.dep) == 0
+    assert executer(["--actualiser", "--submit"], m.dep) == 0
     assert "Déjà à jour" in m.texte and "Rien à envoyer" in m.texte
     assert m.questions == [] and m.envois() == []
     assert [e.url for e in Registre().lire()] == [URL1]
+
+
+def test_relance_reprend_le_nom_memorise(fuseau):
+    # Premier envoi sous un nom saisi ; la relance (sans --nom ni config) réutilise ce nom.
+    Registre().enregistrer(URL1, "Point projet", "Nom Saisi", 2_000_000_000, 0)
+    m = Monde(fuseau, {"/?11111111-AaAaA": page(fuseau, LUNDI)}, reponses=["O"])
+    executer([URL1, "--submit"], m.dep)
+    assert m.session.posts("/ProcessLogin.php")[0]["name"] == "Nom Saisi"
+    assert m.questions == ["Envoyer ? (O/N) "]
 
 
 def test_premiere_participation(fuseau):
@@ -93,15 +112,27 @@ def test_premiere_participation(fuseau):
     assert m.envois() == [("11111111", "1111")]
 
 
-def test_creneaux_passes_laisses_tels_qu_en_ligne(fuseau):
+def _monde_9h30(fuseau):
     # Il est 9h30 : 9h00 et 9h15 sont passés. En ligne : libre à 9h00 et 9h15 seulement.
-    m = Monde(fuseau, {"/?11111111-AaAaA": page(fuseau, LUNDI, [0, 1])},
-              rdvs=[(datetime(2026, 11, 2, 9, 0), datetime(2026, 11, 2, 9, 30))],
-              reponses=["O"], maintenant=datetime(2026, 11, 2, 9, 30))
-    executer([URL1, "--nom", NOM, "--submit"], m.dep)
+    # Agenda : occupé de 9h00 à 9h30.
+    return Monde(fuseau, {"/?11111111-AaAaA": page(fuseau, LUNDI, [0, 1])},
+                 rdvs=[(datetime(2026, 11, 2, 9, 0), datetime(2026, 11, 2, 9, 30))],
+                 reponses=["O"], maintenant=datetime(2026, 11, 2, 9, 30))
+
+
+def test_actualiser_laisse_les_creneaux_passes_tels_qu_en_ligne(fuseau):
+    Registre().enregistrer(URL1, "Point projet", NOM, 2_000_000_000, 0)
+    m = _monde_9h30(fuseau)
+    executer(["--actualiser", "--submit"], m.dep)
     assert m.envois() == [("11111111", "1111")]
     assert "Devenus libres  : lun. 02/11/2026 09:30-10:00" in m.texte
     assert "OCCUPÉS" not in m.texte
+
+
+def test_relance_o2s_reecrit_tout_y_compris_le_passe(fuseau):
+    m = _monde_9h30(fuseau)
+    executer([URL1, "--nom", NOM, "--submit"], m.dep)
+    assert m.envois() == [("11111111", "0011")]
 
 
 def test_liste_et_oublier(fuseau):

@@ -53,10 +53,12 @@ Sans `--submit`, l'outil affiche seulement l'aperçu.
 
 Chaque sondage envoyé est mémorisé localement (`sondages.json`, jamais versionné : lien, titre, nom utilisé, date de fin).
 
-**Double-clic sur `o2s-actualiser.bat`** : pour chaque sondage encore ouvert, l'outil relit votre agenda et affiche **ce qui a changé** depuis ce qui est en ligne (« Devenus OCCUPÉS », « Devenus libres »), puis demande `Envoyer ? (O/N)`. Si rien n'a changé, rien n'est envoyé.
+**Un seul sondage : relancez `o2s.bat` avec le même lien.** L'outil reprend le nom utilisé la première fois, affiche ce qui change, puis, après « Envoyer ? (O/N) », **écrase entièrement** ce qui était en ligne par la version à jour de votre agenda.
+
+**Plusieurs sondages d'un coup : double-clic sur `o2s-actualiser.bat`** : pour chaque sondage encore ouvert, l'outil relit votre agenda et affiche **ce qui a changé** depuis ce qui est en ligne (« Devenus OCCUPÉS », « Devenus libres »), puis demande `Envoyer ? (O/N)`. Si rien n'a changé, rien n'est envoyé.
 
 - L'envoi **remplace** vos disponibilités en ligne (même nom = même participant, pas de doublon).
-- Les créneaux déjà passés sont laissés tels qu'en ligne.
+- Avec `o2s-actualiser.bat`, les créneaux déjà passés sont laissés tels qu'en ligne et rien n'est envoyé si rien n'a changé.
 - Les sondages terminés sortent seuls de la liste.
 - **Une fois la date choisie**, retirez le sondage **avant** d'ajouter la réunion à votre agenda, sinon la prochaine actualisation marquerait ce créneau occupé :
 
