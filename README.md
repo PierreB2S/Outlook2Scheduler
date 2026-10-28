@@ -67,6 +67,8 @@ Un créneau de 15 min est « libre » s'il est dans la plage horaire, hors jours
 uv run pytest
 ```
 
+Validation sur un vrai poste (Outlook + When2meet bidon) : [docs/TEST_MANUEL.md](docs/TEST_MANUEL.md).
+
 Architecture : `sources/` (agenda), `cibles/` (un module par outil de sondage), `regles.py`, `apercu.py`, `cli.py`. Framadate et Doodle sont prévus comme nouvelles cibles.
 
 Licence MIT.
