@@ -4,13 +4,13 @@ import pytest
 import requests
 from conftest import FausseReponse, FausseSession, epochs_sondage, page_when2meet
 
-from outlook2when2meet.cibles.when2meet import (
+from outlook2scheduler.cibles.when2meet import (
     When2meet,
     analyser_page,
     analyser_url,
     chaine_disponibilites,
 )
-from outlook2when2meet.erreurs import (
+from outlook2scheduler.erreurs import (
     ErreurFormatPage,
     ErreurMotDePasse,
     ErreurReseau,

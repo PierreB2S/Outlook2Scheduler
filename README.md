@@ -1,6 +1,6 @@
-# outlook2when2meet
+# Outlook2Scheduler
 
-Remplit automatiquement un sondage **When2meet** à partir de votre agenda **Outlook classique** (Windows).
+Remplit automatiquement vos sondages de planification à partir de votre agenda **Outlook classique** (Windows). Pris en charge : **When2meet** (Framadate et Doodle prévus).
 
 - Lecture de l'agenda par COM (`Recipient.FreeBusy`), sans Microsoft Graph, sans extension de navigateur.
 - **Confidentialité** : seule une grille libre/occupé (0/1) est envoyée. Aucun intitulé, participant ou contenu de réunion n'est lu.

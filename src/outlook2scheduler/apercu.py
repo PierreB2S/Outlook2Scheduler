@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date, datetime
 
-from outlook2when2meet.cibles.base import Sondage
-from outlook2when2meet.regles import Creneau, Motif, Regles
-from outlook2when2meet.temps import JOURS_COURTS
+from outlook2scheduler.cibles.base import Sondage
+from outlook2scheduler.regles import Creneau, Motif, Regles
+from outlook2scheduler.temps import JOURS_COURTS
 
 
 def _jour(d: date) -> str:

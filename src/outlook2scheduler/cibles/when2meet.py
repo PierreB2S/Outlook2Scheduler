@@ -15,8 +15,8 @@ import html as html_lib
 import re
 from typing import Any
 
-from outlook2when2meet.cibles.base import ResultatEnvoi, Sondage
-from outlook2when2meet.erreurs import (
+from outlook2scheduler.cibles.base import ResultatEnvoi, Sondage
+from outlook2scheduler.erreurs import (
     ErreurFormatPage,
     ErreurMotDePasse,
     ErreurReseau,

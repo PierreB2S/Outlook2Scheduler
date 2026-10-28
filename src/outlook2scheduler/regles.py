@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from enum import Enum
 
-from outlook2when2meet.erreurs import ErreurConfig
-from outlook2when2meet.sources.base import (
+from outlook2scheduler.erreurs import ErreurConfig
+from outlook2scheduler.sources.base import (
     ABSENT,
     AILLEURS,
     LIBRE,
@@ -17,7 +17,7 @@ from outlook2when2meet.sources.base import (
     PROVISOIRE,
     GrilleAgenda,
 )
-from outlook2when2meet.temps import Fuseau
+from outlook2scheduler.temps import Fuseau
 
 NOMS_JOURS = {
     "lun": 0, "lundi": 0,

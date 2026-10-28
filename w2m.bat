@@ -1,12 +1,12 @@
 @echo off
 setlocal
-rem outlook2when2meet : remplit un sondage When2meet depuis l'agenda Outlook.
+rem Outlook2Scheduler : remplit un sondage When2meet depuis l'agenda Outlook.
 rem Double-clic : le lien est lu dans le presse-papiers (sinon il est demande),
 rem l'apercu des plages libres s'affiche, puis "Envoyer ? (O/N)" avant tout envoi.
 rem En ligne de commande : w2m.bat [lien] [--nom "Prenom N."] [--heures 08:30-18:00] ...
 
 cd /d "%~dp0"
-title outlook2when2meet
+title Outlook2Scheduler
 
 where uv >nul 2>nul
 if errorlevel 1 goto :sans_uv

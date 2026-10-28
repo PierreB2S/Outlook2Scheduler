@@ -186,7 +186,7 @@ wheels = [
 ]
 
 [[package]]
-name = "outlook2when2meet"
+name = "outlook2scheduler"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

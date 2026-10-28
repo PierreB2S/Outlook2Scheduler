@@ -16,13 +16,13 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Iterable, Protocol
 
-from outlook2when2meet.erreurs import (
+from outlook2scheduler.erreurs import (
     ErreurOutlook,
     ErreurOutlookFerme,
     ErreurSecuriteOutlook,
 )
-from outlook2when2meet.sources.base import PAS_SECONDES, GrilleAgenda
-from outlook2when2meet.temps import Fuseau, est_jour_changement_heure, minuit
+from outlook2scheduler.sources.base import PAS_SECONDES, GrilleAgenda
+from outlook2scheduler.temps import Fuseau, est_jour_changement_heure, minuit
 
 TAILLE_BLOC_JOURS = 7
 

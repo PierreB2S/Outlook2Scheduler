@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from outlook2when2meet.erreurs import ErreurConfig
+from outlook2scheduler.erreurs import ErreurConfig
 
 FICHIER_PAR_DEFAUT = Path("config.toml")
 

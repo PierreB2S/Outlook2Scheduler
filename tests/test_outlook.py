@@ -3,9 +3,9 @@ from datetime import date, datetime
 import pytest
 from conftest import FauxFreeBusy
 
-from outlook2when2meet.erreurs import ErreurOutlook, ErreurOutlookFerme, ErreurSecuriteOutlook
-from outlook2when2meet.sources.base import LIBRE, OCCUPE, PROVISOIRE
-from outlook2when2meet.sources.outlook import (
+from outlook2scheduler.erreurs import ErreurOutlook, ErreurOutlookFerme, ErreurSecuriteOutlook
+from outlook2scheduler.sources.base import LIBRE, OCCUPE, PROVISOIRE
+from outlook2scheduler.sources.outlook import (
     DISP_E_EXCEPTION,
     E_ABORT,
     MK_E_UNAVAILABLE,
@@ -13,7 +13,7 @@ from outlook2when2meet.sources.outlook import (
     decouper_blocs,
     traduire_erreur_com,
 )
-from outlook2when2meet.temps import est_jour_changement_heure
+from outlook2scheduler.temps import est_jour_changement_heure
 
 # Passage à l'heure d'hiver : dimanche 25/10/2026 ; à l'heure d'été : dimanche 28/03/2027.
 HIVER = date(2026, 10, 25)

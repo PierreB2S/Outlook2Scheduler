@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from outlook2when2meet.temps import FuseauZone
+from outlook2scheduler.temps import FuseauZone
 
 PARIS = "Europe/Paris"
 

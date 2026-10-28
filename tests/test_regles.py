@@ -2,9 +2,9 @@ from datetime import datetime, time
 
 import pytest
 
-from outlook2when2meet.erreurs import ErreurConfig
-from outlook2when2meet.regles import Motif, Regles, evaluer, parse_heures, parse_jours
-from outlook2when2meet.sources.base import ABSENT, AILLEURS, LIBRE, OCCUPE, PROVISOIRE, GrilleAgenda
+from outlook2scheduler.erreurs import ErreurConfig
+from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_jours
+from outlook2scheduler.sources.base import ABSENT, AILLEURS, LIBRE, OCCUPE, PROVISOIRE, GrilleAgenda
 
 # Lundi 2 novembre 2026
 LUNDI = (2026, 11, 2)

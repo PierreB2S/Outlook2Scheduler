@@ -10,14 +10,14 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Callable
 
-from outlook2when2meet import __version__
-from outlook2when2meet.apercu import formater
-from outlook2when2meet.cibles.base import CibleSondage
-from outlook2when2meet.config import Config, charger
-from outlook2when2meet.erreurs import ErreurUtilisateur
-from outlook2when2meet.regles import Regles, evaluer, parse_heures, parse_jours
-from outlook2when2meet.sources.base import PAS_SECONDES, SourceAgenda
-from outlook2when2meet.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
+from outlook2scheduler import __version__
+from outlook2scheduler.apercu import formater
+from outlook2scheduler.cibles.base import CibleSondage
+from outlook2scheduler.config import Config, charger
+from outlook2scheduler.erreurs import ErreurUtilisateur
+from outlook2scheduler.regles import Regles, evaluer, parse_heures, parse_jours
+from outlook2scheduler.sources.base import PAS_SECONDES, SourceAgenda
+from outlook2scheduler.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
 
 CODES_LISIBLES = {"0": ".", "1": "p", "2": "X", "3": "A", "4": "a"}
 
@@ -29,7 +29,7 @@ def creer_session():  # pragma: no cover - dépend du réseau du poste
 
     truststore.inject_into_ssl()
     session = requests.Session()
-    session.headers["User-Agent"] = f"outlook2when2meet/{__version__}"
+    session.headers["User-Agent"] = f"outlook2scheduler/{__version__}"
     return session
 
 
@@ -59,13 +59,13 @@ class Dependances:
 
 
 def _source_outlook(fuseau: Fuseau) -> SourceAgenda:  # pragma: no cover
-    from outlook2when2meet.sources.outlook import OutlookCOM, SourceOutlook
+    from outlook2scheduler.sources.outlook import OutlookCOM, SourceOutlook
 
     return SourceOutlook(OutlookCOM(), fuseau)
 
 
 def _cibles_par_defaut() -> list[CibleSondage]:  # pragma: no cover
-    from outlook2when2meet.cibles.when2meet import When2meet
+    from outlook2scheduler.cibles.when2meet import When2meet
 
     return [When2meet(creer_session())]
 

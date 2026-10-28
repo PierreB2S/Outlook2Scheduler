@@ -1,7 +1,7 @@
 [project]
-name = "outlook2when2meet"
+name = "outlook2scheduler"
 version = "0.1.0"
-description = "Remplit un sondage When2meet depuis l'agenda Outlook (grille libre/occupé uniquement)"
+description = "Remplit les sondages de planification (When2meet, puis Framadate/Doodle) depuis l'agenda Outlook, grille libre/occupé uniquement"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-w2m = "outlook2when2meet.cli:main"
+w2m = "outlook2scheduler.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.9.0,<0.12.0"]

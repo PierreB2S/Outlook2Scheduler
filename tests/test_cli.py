@@ -5,11 +5,11 @@ from datetime import date, datetime, time
 import pytest
 from conftest import FausseSession, FauxFreeBusy, epochs_sondage, page_when2meet
 
-from outlook2when2meet.cibles.when2meet import When2meet
-from outlook2when2meet.cli import Dependances, executer, main
-from outlook2when2meet.erreurs import ErreurConfig, ErreurSondageJoursSemaine
-from outlook2when2meet.sources.base import OCCUPE, PROVISOIRE
-from outlook2when2meet.sources.outlook import SourceOutlook
+from outlook2scheduler.cibles.when2meet import When2meet
+from outlook2scheduler.cli import Dependances, executer, main
+from outlook2scheduler.erreurs import ErreurConfig, ErreurSondageJoursSemaine
+from outlook2scheduler.sources.base import OCCUPE, PROVISOIRE
+from outlook2scheduler.sources.outlook import SourceOutlook
 
 URL = "https://www.when2meet.com/?12345678-AbCdE"
 
@@ -172,7 +172,7 @@ def test_main_affiche_les_erreurs_sans_trace(tmp_path, monkeypatch, capsys):
 def test_config_exemple_valide(tmp_path):
     from pathlib import Path
 
-    from outlook2when2meet.config import charger
+    from outlook2scheduler.config import charger
 
     exemple = Path(__file__).parent.parent / "config.example.toml"
     config = charger(exemple)
