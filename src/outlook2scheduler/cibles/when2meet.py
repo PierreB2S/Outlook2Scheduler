@@ -103,8 +103,16 @@ def _requete(session: Any, methode: str, url: str, **kwargs: Any) -> Any:
         raise ErreurReseau(f"Le proxy a refusé la connexion à When2meet.\nDétail : {exc}") from exc
     except requests.exceptions.RequestException as exc:
         raise ErreurReseau(
-            f"Impossible de joindre When2meet (réseau, proxy ou site indisponible).\nDétail : {exc}"
+            "Impossible de joindre When2meet (réseau, proxy ou site indisponible).\n"
+            "Si le site s'ouvre dans Edge, utilisez le mode réseau Windows : "
+            '--reseau windows (ou reseau = "windows" dans config.toml).\n'
+            f"Détail : {exc}"
         ) from exc
+    if reponse.status_code == 407:
+        raise ErreurReseau(
+            "Le proxy d'entreprise demande une authentification (HTTP 407). Le mode "
+            "réseau Windows (--reseau windows) s'authentifie avec votre session Windows."
+        )
     if reponse.status_code >= 400:
         raise ErreurReseau(f"When2meet a répondu HTTP {reponse.status_code} sur {url}.")
     return reponse

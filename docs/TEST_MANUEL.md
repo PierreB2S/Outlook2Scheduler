@@ -9,7 +9,8 @@ Notez pour chaque étape : OK / KO + le message affiché.
 1. Cloner le dépôt, copier `config.example.toml` en `config.toml`, mettre `nom = "Test o2s"`.
 2. Ouvrir une invite de commandes dans le dossier et lancer `uv run --system-certs pytest` (ou `--native-tls` sur un uv ancien).
    Attendu : tous les tests passent. Valide l'installation à travers le proxy.
-3. Dans Outlook, choisir un jour ouvré **J** de la semaine qui vient, **sans autre rendez-vous entre 9:00 et 17:00** (sinon, adapter les résultats attendus), et créer deux rendez-vous **sans participant** :
+3. Lancer `o2s.bat --test-reseau`. Attendu : `mode windows : OK`. Le mode python peut échouer derrière un proxy à configuration automatique : c'est normal.
+4. Dans Outlook, choisir un jour ouvré **J** de la semaine qui vient, **sans autre rendez-vous entre 9:00 et 17:00** (sinon, adapter les résultats attendus), et créer deux rendez-vous **sans participant** :
    - « Test A » de 10:00 à 10:30, statut **Occupé** ;
    - « Test B » de 14:00 à 15:00, statut **Provisoire**.
 

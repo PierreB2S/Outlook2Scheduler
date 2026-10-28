@@ -21,3 +21,6 @@ ailleurs_libre = true
 
 # Marge en minutes avant et après chaque réunion (0 = aucune)
 marge_minutes = 0
+
+# Accès Internet : "windows" (comme Edge, gère le proxy d'entreprise ; défaut) ou "python"
+reseau = "windows"

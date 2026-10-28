@@ -19,6 +19,7 @@ CLES = {
     "provisoire_libre": bool,
     "ailleurs_libre": bool,
     "marge_minutes": int,
+    "reseau": str,
 }
 
 
@@ -31,6 +32,7 @@ class Config:
     provisoire_libre: bool = False
     ailleurs_libre: bool = True
     marge_minutes: int = 0
+    reseau: str = ""  # vide = mode par défaut (windows sous Windows)
 
 
 def charger(chemin: Path | None = None) -> Config:

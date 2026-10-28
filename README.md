@@ -20,7 +20,9 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
 ### Proxy d'entreprise
 
 - `o2s.bat` demande à uv d'utiliser les certificats Windows (`UV_SYSTEM_CERTS`, ou `UV_NATIVE_TLS` pour un uv ancien). En ligne de commande : `uv run --system-certs ...` (ou `--native-tls`).
-- Côté Python, `truststore` fait utiliser les certificats Windows pour joindre When2meet.
+- Pour joindre When2meet, l'outil passe par défaut par **la pile réseau de Windows** (celle d'Edge et d'Excel) : mêmes réglages proxy que le navigateur (y compris script de configuration automatique), authentification au proxy avec votre session Windows, certificats Windows.
+- Vérifier l'accès sans rien envoyer : `o2s.bat --test-reseau`.
+- Autre mode : `--reseau python` (ou `reseau = "python"` dans `config.toml`) utilise `requests` + `truststore` ; il ne gère que les proxys fixes (`HTTPS_PROXY`).
 - Si uv ne peut pas **télécharger Python**, utilisez le Python déjà installé (3.11 ou plus) :
   ```
   uv python find
@@ -42,6 +44,7 @@ Ligne de commande (même options via le `.bat`) :
 uv run o2s <lien> [--nom "Prénom N."] [--heures 08:30-18:00] [--jours-exclus sam,dim]
                [--provisoire-libre] [--marge 15] [--mot-de-passe X] [--submit] [--oui]
 uv run o2s --agenda 2026-11-02     # diagnostic : grille Outlook d'un jour, rien n'est envoyé
+uv run o2s --test-reseau           # diagnostic : accès à When2meet, rien n'est envoyé
 ```
 
 Sans `--submit`, l'outil affiche seulement l'aperçu.
@@ -58,7 +61,6 @@ Un créneau de 15 min est « libre » s'il est dans la plage horaire, hors jours
 - Les sondages « jours de la semaine » (sans dates) sont refusés.
 - Le **jour même** d'un changement d'heure est signalé dans l'aperçu : vérifiez-le à la main.
 - When2meet n'a pas d'API officielle : l'outil utilise les mêmes requêtes que la page. Si le site change, un message « format de page changé » s'affiche.
-- Proxy configuré par script PAC : non géré par `requests` ; définir `HTTPS_PROXY` si besoin.
 - **Envoyer remplace** vos disponibilités précédentes dans ce sondage.
 
 ## Développement

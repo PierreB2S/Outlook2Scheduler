@@ -28,7 +28,7 @@ class Monde:
         self._reponses = list(reponses)
         self.dep = Dependances(
             fabrique_source=lambda f: SourceOutlook(self.client, f),
-            fabrique_cibles=lambda: [When2meet(self.session)],
+            fabrique_cibles=lambda mode: [When2meet(self.session)],
             fuseau=fuseau,
             entree=self._entree,
             sortie=self.sorties.append,
@@ -178,3 +178,21 @@ def test_config_exemple_valide(tmp_path):
     config = charger(exemple)
     assert config.heures == "08:30-18:00"
     assert config.jours_exclus == ["sam", "dim"]
+
+
+@pytest.mark.parametrize(
+    "contenu,argv,attendu",
+    [("", [], "windows"), ('reseau = "python"\n', [], "python"), ('reseau = "python"\n', ["--reseau", "windows"], "windows")],
+)
+def test_choix_du_mode_reseau(fuseau, tmp_path, monkeypatch, contenu, argv, attendu):
+    import sys
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "platform", "win32")
+    (tmp_path / "config.toml").write_text(contenu, encoding="utf-8")
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(9), time(10))
+    m = Monde(fuseau, epochs)
+    modes = []
+    m.dep.fabrique_cibles = lambda mode: modes.append(mode) or [When2meet(m.session)]
+    executer([URL, *argv], m.dep)
+    assert modes == [attendu]

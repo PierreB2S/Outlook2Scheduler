@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Callable
 
 from outlook2scheduler import __version__
+from outlook2scheduler import reseau
 from outlook2scheduler.apercu import formater
 from outlook2scheduler.cibles.base import CibleSondage
 from outlook2scheduler.config import Config, charger
@@ -20,17 +21,6 @@ from outlook2scheduler.sources.base import PAS_SECONDES, SourceAgenda
 from outlook2scheduler.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
 
 CODES_LISIBLES = {"0": ".", "1": "p", "2": "X", "3": "A", "4": "a"}
-
-
-def creer_session():  # pragma: no cover - dépend du réseau du poste
-    """Session HTTP utilisant les certificats Windows (proxy avec inspection SSL)."""
-    import requests
-    import truststore
-
-    truststore.inject_into_ssl()
-    session = requests.Session()
-    session.headers["User-Agent"] = f"outlook2scheduler/{__version__}"
-    return session
 
 
 def lire_presse_papiers() -> str:  # pragma: no cover - dépend de Windows
@@ -51,7 +41,7 @@ class Dependances:
     """Tout ce qui touche au monde extérieur, remplaçable dans les tests."""
 
     fabrique_source: Callable[[Fuseau], SourceAgenda] | None = None
-    fabrique_cibles: Callable[[], list[CibleSondage]] | None = None
+    fabrique_cibles: Callable[[str], list[CibleSondage]] | None = None
     fuseau: Fuseau = field(default_factory=FuseauSysteme)
     entree: Callable[[str], str] = input
     sortie: Callable[[str], None] = print
@@ -64,10 +54,10 @@ def _source_outlook(fuseau: Fuseau) -> SourceAgenda:  # pragma: no cover
     return SourceOutlook(OutlookCOM(), fuseau)
 
 
-def _cibles_par_defaut() -> list[CibleSondage]:  # pragma: no cover
+def _cibles_par_defaut(mode_reseau: str) -> list[CibleSondage]:  # pragma: no cover
     from outlook2scheduler.cibles.when2meet import When2meet
 
-    return [When2meet(creer_session())]
+    return [When2meet(reseau.creer_session(mode_reseau))]
 
 
 def construire_parser() -> argparse.ArgumentParser:
@@ -96,6 +86,16 @@ def construire_parser() -> argparse.ArgumentParser:
         "--agenda",
         metavar="AAAA-MM-JJ",
         help="diagnostic : affiche la grille Outlook de ce jour (rien n'est envoyé)",
+    )
+    p.add_argument(
+        "--reseau",
+        choices=reseau.MODES,
+        help="accès Internet : windows (comme Edge, gère le proxy d'entreprise ; défaut) ou python",
+    )
+    p.add_argument(
+        "--test-reseau",
+        action="store_true",
+        help="diagnostic : teste l'accès à When2meet dans les deux modes (rien n'est envoyé)",
     )
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return p
@@ -164,6 +164,20 @@ def _diagnostic_agenda(jour_texte: str, dep: Dependances) -> int:
     return 0
 
 
+def _diagnostic_reseau(dep: Dependances) -> int:  # pragma: no cover - dépend du poste
+    dep.sortie(f"Test d'accès à {reseau.URL_TEST} (simple lecture, rien n'est envoyé)")
+    ok = False
+    for mode in reseau.MODES:
+        try:
+            compte_rendu = reseau.verifier_acces(reseau.creer_session(mode))
+            dep.sortie(f"  mode {mode:8}: OK ({compte_rendu})")
+            ok = True
+        except Exception as exc:  # on veut voir toutes les erreurs ici
+            premiere_ligne = str(exc).splitlines()[0] if str(exc) else type(exc).__name__
+            dep.sortie(f"  mode {mode:8}: ÉCHEC - {premiere_ligne[:300]}")
+    return 0 if ok else 1
+
+
 def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     dep = dep or Dependances()
     dep.fabrique_source = dep.fabrique_source or _source_outlook
@@ -172,10 +186,16 @@ def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     config = charger(args.config)
     regles = regles_depuis(config, args)
 
+    mode_reseau = args.reseau or config.reseau or reseau.mode_par_defaut()
+    if mode_reseau not in reseau.MODES:
+        raise ErreurUtilisateur(f"Mode réseau inconnu dans la configuration : {mode_reseau!r} (windows ou python).")
+
+    if args.test_reseau:
+        return _diagnostic_reseau(dep)
     if args.agenda:
         return _diagnostic_agenda(args.agenda, dep)
 
-    cibles = dep.fabrique_cibles()
+    cibles = dep.fabrique_cibles(mode_reseau)
     lien, cible = _obtenir_lien(args, cibles, dep)
 
     dep.sortie(f"Lecture du sondage {cible.nom}...")
