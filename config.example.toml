@@ -1,0 +1,23 @@
+# Copiez ce fichier en « config.toml » (même dossier) et adaptez-le.
+# config.toml n'est pas versionné (voir .gitignore).
+
+# Nom affiché dans le sondage
+nom = "Prénom N."
+
+# Mot de passe When2meet (facultatif, propre à chaque sondage ; laisser vide en général)
+mot_de_passe = ""
+
+# Plage horaire acceptée (heure de ce poste)
+heures = "08:30-18:00"
+
+# Jours jamais proposés : lun, mar, mer, jeu, ven, sam, dim (ou [] pour aucun)
+jours_exclus = ["sam", "dim"]
+
+# Rendez-vous « provisoires » comptés comme libres ?
+provisoire_libre = false
+
+# Statut « travaille ailleurs » compté comme libre ?
+ailleurs_libre = true
+
+# Marge en minutes avant et après chaque réunion (0 = aucune)
+marge_minutes = 0

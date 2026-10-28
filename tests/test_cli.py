@@ -167,3 +167,14 @@ def test_main_affiche_les_erreurs_sans_trace(tmp_path, monkeypatch, capsys):
     assert main(["https://exemple.invalid/pas-un-sondage"]) == 1
     err = capsys.readouterr().err
     assert "ERREUR" in err and "Traceback" not in err
+
+
+def test_config_exemple_valide(tmp_path):
+    from pathlib import Path
+
+    from outlook2when2meet.config import charger
+
+    exemple = Path(__file__).parent.parent / "config.example.toml"
+    config = charger(exemple)
+    assert config.heures == "08:30-18:00"
+    assert config.jours_exclus == ["sam", "dim"]
