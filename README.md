@@ -49,6 +49,22 @@ uv run o2s --test-reseau           # diagnostic : accès à When2meet, rien n'es
 
 Sans `--submit`, l'outil affiche seulement l'aperçu.
 
+### Mettre à jour ses disponibilités quand le sondage traîne
+
+Chaque sondage envoyé est mémorisé localement (`sondages.json`, jamais versionné : lien, titre, nom utilisé, date de fin).
+
+**Double-clic sur `o2s-actualiser.bat`** : pour chaque sondage encore ouvert, l'outil relit votre agenda et affiche **ce qui a changé** depuis ce qui est en ligne (« Devenus OCCUPÉS », « Devenus libres »), puis demande `Envoyer ? (O/N)`. Si rien n'a changé, rien n'est envoyé.
+
+- L'envoi **remplace** vos disponibilités en ligne (même nom = même participant, pas de doublon).
+- Les créneaux déjà passés sont laissés tels qu'en ligne.
+- Les sondages terminés sortent seuls de la liste.
+- **Une fois la date choisie**, retirez le sondage **avant** d'ajouter la réunion à votre agenda, sinon la prochaine actualisation marquerait ce créneau occupé :
+
+```
+o2s.bat --liste            # sondages suivis
+o2s.bat --oublier          # demande lequel retirer (ou : --oublier 2, --oublier <lien>)
+```
+
 ### Règles de disponibilité
 
 Un créneau de 15 min est « libre » s'il est dans la plage horaire, hors jours exclus, et qu'Outlook le donne libre sur toute sa durée (et sur la marge éventuelle). « Provisoire » est occupé par défaut, « absent » toujours occupé, « travaille ailleurs » libre par défaut (`ailleurs_libre`).

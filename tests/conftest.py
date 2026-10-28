@@ -75,8 +75,12 @@ def page_when2meet(
     titre: str = "Réunion test &amp; démo",
     dispo: dict[str, list[int]] | None = None,
     jours_semaine: bool = False,
+    noms: dict[str, str] | None = None,
 ) -> str:
-    """Page When2meet synthétique, reprenant la structure des variables JS de la vraie page."""
+    """Page When2meet synthétique, reprenant la structure des variables JS de la vraie page.
+
+    ``noms`` : identifiant -> nom affiché (déjà échappé comme en JavaScript).
+    """
     lignes = [
         "<html><head>",
         f"<title>{titre} - When2meet</title>",
@@ -86,7 +90,8 @@ def page_when2meet(
         "var PeopleNames = new Array(); var PeopleIDs = new Array();",
     ]
     for pid_index, pid in enumerate((dispo or {}).keys()):
-        lignes.append(f"PeopleNames[{pid_index}] = 'Participant {pid_index}';PeopleIDs[{pid_index}] = {pid};")
+        nom = (noms or {}).get(pid, f"Participant {pid_index}")
+        lignes.append(f"PeopleNames[{pid_index}] = '{nom}';PeopleIDs[{pid_index}] = {pid};")
     for i, t in enumerate(epochs):
         lignes.append(f"TimeOfSlot[{i}]={t};")
         lignes.append(f"AvailableAtSlot[{i}]=new Array();")

@@ -93,6 +93,7 @@ class Motif(str, Enum):
     HORS_PLAGE = "hors plage horaire"
     JOUR_EXCLU = "jour exclu"
     HORS_GRILLE = "hors de la grille Outlook"
+    PASSE = "créneau passé : laissé tel qu'en ligne"
 
 
 @dataclass(frozen=True)

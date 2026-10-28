@@ -29,6 +29,8 @@ BASE = "https://www.when2meet.com"
 URL_RE = re.compile(r"when2meet\.com/(?:index\.php)?\?(\d+)-([A-Za-z0-9]+)", re.I)
 TIME_OF_SLOT_RE = re.compile(r"TimeOfSlot\[(\d+)\]\s*=\s*(\d+)")
 AVAILABLE_RE = re.compile(r"AvailableAtSlot\[(\d+)\]\.push\((\d+)\)")
+NOM_RE = re.compile(r"PeopleNames\[(\d+)\]\s*=\s*'((?:[^'\\]|\\.)*)'")
+ID_RE = re.compile(r"PeopleIDs\[(\d+)\]\s*=\s*(\d+)")
 TITRE_RE = re.compile(r"<title>\s*(.*?)\s*-\s*When2meet\s*</title>", re.S | re.I)
 JOUR_SEMAINE_RE = re.compile(
     r'ShowSlot\(\d+,\s*"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b'
@@ -79,7 +81,16 @@ def analyser_page(page: str, url: str) -> Sondage:
         )
     m = TITRE_RE.search(page)
     titre = html_lib.unescape(m.group(1)) if m else "(sans titre)"
-    return Sondage(url=url, titre=titre, creneaux=creneaux, duree_creneau=duree)
+    return Sondage(url=url, titre=titre, creneaux=creneaux, duree_creneau=duree, participants=_participants(page))
+
+
+def _participants(page: str) -> dict[str, frozenset[int]]:
+    noms = {i: html_lib.unescape(re.sub(r"\\(.)", r"\1", n)) for i, n in NOM_RE.findall(page)}
+    ids = dict(ID_RE.findall(page))
+    par_id: dict[str, set[int]] = {}
+    for i, pid in AVAILABLE_RE.findall(page):
+        par_id.setdefault(pid, set()).add(int(i))
+    return {nom: frozenset(par_id.get(ids.get(i, ""), set())) for i, nom in noms.items()}
 
 
 def chaine_disponibilites(disponibilites: list[bool]) -> str:
@@ -126,6 +137,9 @@ class When2meet:
 
     def reconnait(self, url: str) -> bool:
         return bool(URL_RE.search(url or ""))
+
+    def normaliser(self, url: str) -> str:
+        return url_canonique(url)
 
     def _page(self, url: str) -> str:
         return _requete(self.session, "GET", url_canonique(url)).text

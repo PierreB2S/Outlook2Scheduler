@@ -73,6 +73,14 @@ o2s.bat --marge 15 --heures 09:30-16:00
 ```
 Attendu : jour J `09:30-09:45, 10:45-13:45, 15:15-16:00` (aperçu seulement, répondre N).
 
+## 5 bis. Actualisation
+
+1. `o2s.bat --liste` : « Test o2s » apparaît.
+2. Dans Outlook, ajouter « Test D » le jour J de 11:00 à 12:00 (Occupé).
+3. Double-cliquer sur `o2s-actualiser.bat`. Attendu : `Devenus OCCUPÉS : ... 11:00-12:00`, puis `Envoyer ? (O/N)` → O → OK.
+4. Relancer `o2s-actualiser.bat` sans rien changer. Attendu : « Déjà à jour », « Rien à envoyer », aucune question.
+5. `o2s.bat --oublier` → choisir « Test o2s ». `o2s.bat --liste` : la liste est vide.
+
 ## 6. Messages d'erreur
 
 | Action | Attendu |
@@ -93,4 +101,4 @@ Prochain passage : dimanche 28/03/2027.
 
 ## 8. Nettoyage
 
-Supprimer les rendez-vous « Test A/B/C ». Les sondages When2meet ne se suppriment pas : ils expirent seuls.
+Supprimer les rendez-vous « Test A/B/C/D ». Les sondages When2meet ne se suppriment pas : ils expirent seuls.

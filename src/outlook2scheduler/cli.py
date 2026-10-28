@@ -4,19 +4,21 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Callable
 
 from outlook2scheduler import __version__
 from outlook2scheduler import reseau
-from outlook2scheduler.apercu import formater
+from outlook2scheduler.apercu import formater, formater_ecart
 from outlook2scheduler.cibles.base import CibleSondage
 from outlook2scheduler.config import Config, charger
 from outlook2scheduler.erreurs import ErreurUtilisateur
-from outlook2scheduler.regles import Regles, evaluer, parse_heures, parse_jours
+from outlook2scheduler.registre import Registre
+from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_jours
 from outlook2scheduler.sources.base import PAS_SECONDES, SourceAgenda
 from outlook2scheduler.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
 
@@ -46,6 +48,7 @@ class Dependances:
     entree: Callable[[str], str] = input
     sortie: Callable[[str], None] = print
     presse_papiers: Callable[[], str] = lire_presse_papiers
+    maintenant: Callable[[], float] = time.time
 
 
 SOURCES = ("rendez-vous", "freebusy")
@@ -89,6 +92,19 @@ def construire_parser() -> argparse.ArgumentParser:
     p.add_argument("--config", type=Path, help="fichier de configuration (défaut : config.toml)")
     p.add_argument("--submit", action="store_true", help="envoyer après aperçu et confirmation")
     p.add_argument("--oui", action="store_true", help="avec --submit : ne pas demander de confirmation")
+    p.add_argument(
+        "--actualiser",
+        action="store_true",
+        help="remet à jour tous les sondages déjà envoyés et encore ouverts (montre les changements)",
+    )
+    p.add_argument("--liste", action="store_true", help="liste les sondages suivis")
+    p.add_argument(
+        "--oublier",
+        nargs="?",
+        const="",
+        metavar="N|LIEN",
+        help="ne plus actualiser un sondage (ex. une fois la date choisie)",
+    )
     p.add_argument(
         "--agenda",
         metavar="AAAA-MM-JJ",
@@ -192,6 +208,158 @@ def _diagnostic_reseau(dep: Dependances) -> int:  # pragma: no cover - dépend d
     return 0 if ok else 1
 
 
+@dataclass
+class Contexte:
+    args: argparse.Namespace
+    config: Config
+    regles: Regles
+    source: str
+    dep: Dependances
+    registre: Registre
+
+
+def _oui(reponse: str) -> bool:
+    return reponse.strip().lower() in {"o", "oui", "y", "yes"}
+
+
+def _traiter(lien: str, cible: CibleSondage, ctx: Contexte, nom: str, actualisation: bool = False) -> int:
+    """Lit le sondage et l'agenda, affiche l'aperçu et l'écart, puis envoie si demandé."""
+    dep, args = ctx.dep, ctx.args
+    assert dep.fabrique_source is not None
+    dep.sortie(f"Lecture du sondage {cible.nom}...")
+    sondage = cible.lire(lien)
+    jours = sorted({dep.fuseau.vers_local(t).date() for t in sondage.creneaux})
+    dep.sortie(f"Lecture de l'agenda Outlook ({len(jours)} jour(s))...")
+    grille = dep.fabrique_source(dep.fuseau, ctx.source).grille(jours)
+    creneaux = evaluer(sondage.creneaux, grille, ctx.regles, dep.fuseau, sondage.duree_creneau)
+
+    avant = sondage.participants.get(nom) if nom else None
+    if avant is not None:
+        # Les créneaux déjà passés restent tels qu'en ligne : inutile de les réécrire.
+        maintenant = dep.maintenant()
+        creneaux = [
+            replace(c, libre=i in avant, motif=Motif.PASSE)
+            if c.epoch + sondage.duree_creneau <= maintenant else c
+            for i, c in enumerate(creneaux)
+        ]
+
+    dep.sortie("")
+    dep.sortie(formater(sondage, creneaux, ctx.regles, grille.nb_rendez_vous, detail=not actualisation))
+    if nom:
+        dep.sortie("")
+        dep.sortie(formater_ecart(creneaux, avant, nom))
+    dep.sortie("")
+
+    if not args.submit:
+        dep.sortie("Aperçu seulement : rien n'a été envoyé (ajoutez --submit pour envoyer).")
+        return 0
+
+    while not nom:
+        nom = dep.entree("Votre nom dans le sondage : ").strip()
+        avant = sondage.participants.get(nom)
+        if nom:
+            dep.sortie(formater_ecart(creneaux, avant, nom))
+    disponibilites = [c.libre for c in creneaux]
+
+    if avant is not None and {i for i, d in enumerate(disponibilites) if d} == set(avant):
+        ctx.registre.enregistrer(sondage.url, sondage.titre, nom, sondage.fin, dep.maintenant())
+        dep.sortie("Rien à envoyer.")
+        return 0
+
+    mot_de_passe = args.mot_de_passe if args.mot_de_passe is not None else ctx.config.mot_de_passe
+    if not args.oui:
+        dep.sortie(f"Participant : {nom}")
+        if not _oui(dep.entree("Envoyer ? (O/N) ")):
+            dep.sortie("Envoi annulé : rien n'a été envoyé.")
+            return 0
+
+    dep.sortie(f"Envoi à {cible.nom}...")
+    resultat = cible.envoyer(sondage, nom, mot_de_passe, disponibilites)
+    ctx.registre.enregistrer(sondage.url, sondage.titre, nom, sondage.fin, dep.maintenant())
+    rappel = "Dans le navigateur, rechargez la page du sondage (F5) pour voir la mise à jour."
+    if resultat.verifie:
+        dep.sortie(f"OK : {resultat.nb_libres} créneau(x) libres enregistrés et vérifiés sur la page.")
+        dep.sortie(rappel)
+        return 0
+    if resultat.verifie is None:
+        dep.sortie(f"Envoyé, mais non vérifié ({resultat.detail}). Contrôlez le sondage dans le navigateur.")
+        dep.sortie(rappel)
+        return 0
+    dep.sortie(
+        "ATTENTION : l'envoi a été accepté mais la page ne reflète pas ce qui a été envoyé "
+        f"({resultat.detail}). Contrôlez le sondage dans le navigateur."
+    )
+    return 3
+
+
+def _purger(ctx: Contexte) -> None:
+    for e in ctx.registre.purger_termines(ctx.dep.maintenant()):
+        ctx.dep.sortie(f"Sondage terminé, retiré de la liste : {e.titre}")
+
+
+def _liste(ctx: Contexte) -> int:
+    _purger(ctx)
+    entrees = ctx.registre.lire()
+    if not entrees:
+        ctx.dep.sortie("Aucun sondage en cours de suivi.")
+        return 0
+    ctx.dep.sortie("Sondages suivis (actualisés par o2s-actualiser.bat) :")
+    for n, e in enumerate(entrees, 1):
+        fin = ctx.dep.fuseau.vers_local(e.fin)
+        ctx.dep.sortie(f"  {n}. {e.titre}  [{e.nom}]  jusqu'au {fin:%d/%m/%Y}, dernier envoi {e.dernier_envoi}")
+        ctx.dep.sortie(f"     {e.url}")
+    return 0
+
+
+def _oublier(ctx: Contexte, cibles: list[CibleSondage], quoi: str) -> int:
+    entrees = ctx.registre.lire()
+    if not entrees:
+        ctx.dep.sortie("Aucun sondage en cours de suivi.")
+        return 0
+    if not quoi:
+        _liste(ctx)
+        quoi = ctx.dep.entree("Numéro (ou lien) du sondage à ne plus actualiser : ").strip()
+    if quoi.isdigit() and 1 <= int(quoi) <= len(entrees):
+        url = entrees[int(quoi) - 1].url
+    else:
+        cible = _choisir_cible(quoi, cibles)
+        if cible is None:
+            raise ErreurUtilisateur(f"Ni un numéro de la liste ni un lien de sondage : {quoi!r}.")
+        url = cible.normaliser(quoi)
+    retire = ctx.registre.oublier(url)
+    if retire is None:
+        ctx.dep.sortie("Ce sondage n'était pas dans la liste.")
+    else:
+        ctx.dep.sortie(f"Ne sera plus actualisé : {retire.titre}. (Vos disponibilités en ligne restent telles quelles.)")
+    return 0
+
+
+def _actualiser(ctx: Contexte, cibles: list[CibleSondage]) -> int:
+    _purger(ctx)
+    entrees = ctx.registre.lire()
+    if not entrees:
+        ctx.dep.sortie("Aucun sondage à actualiser : envoyez d'abord un sondage avec o2s.bat.")
+        return 0
+    ctx.dep.sortie(
+        f"{len(entrees)} sondage(s) à actualiser. Rappel : une fois la date choisie, retirez le "
+        "sondage de la liste (o2s.bat --oublier) avant d'ajouter la réunion à votre agenda."
+    )
+    pire = 0
+    for n, e in enumerate(entrees, 1):
+        ctx.dep.sortie("")
+        ctx.dep.sortie(f"===== [{n}/{len(entrees)}] {e.titre} =====")
+        cible = _choisir_cible(e.url, cibles)
+        if cible is None:
+            ctx.dep.sortie(f"Outil de sondage non pris en charge : {e.url}")
+            continue
+        try:
+            pire = max(pire, _traiter(e.url, cible, ctx, e.nom, actualisation=True))
+        except ErreurUtilisateur as exc:
+            ctx.dep.sortie(f"ERREUR : {exc}")
+            pire = max(pire, 1)
+    return pire
+
+
 def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     dep = dep or Dependances()
     dep.fabrique_source = dep.fabrique_source or _source_outlook
@@ -213,49 +381,17 @@ def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     if args.agenda:
         return _diagnostic_agenda(args.agenda, dep, source)
 
+    ctx = Contexte(args, config, regles, source, dep, Registre())
+    if args.liste:
+        return _liste(ctx)
     cibles = dep.fabrique_cibles(mode_reseau)
+    if args.oublier is not None:
+        return _oublier(ctx, cibles, args.oublier.strip())
+    if args.actualiser:
+        return _actualiser(ctx, cibles)
+
     lien, cible = _obtenir_lien(args, cibles, dep)
-
-    dep.sortie(f"Lecture du sondage {cible.nom}...")
-    sondage = cible.lire(lien)
-    jours = sorted({dep.fuseau.vers_local(t).date() for t in sondage.creneaux})
-    dep.sortie(f"Lecture de l'agenda Outlook ({len(jours)} jour(s))...")
-    grille = dep.fabrique_source(dep.fuseau, source).grille(jours)
-    creneaux = evaluer(sondage.creneaux, grille, regles, dep.fuseau, sondage.duree_creneau)
-
-    dep.sortie("")
-    dep.sortie(formater(sondage, creneaux, regles, grille.nb_rendez_vous))
-    dep.sortie("")
-
-    if not args.submit:
-        dep.sortie("Aperçu seulement : rien n'a été envoyé (ajoutez --submit pour envoyer).")
-        return 0
-
-    nom = (args.nom or config.nom).strip()
-    while not nom:
-        nom = dep.entree("Votre nom dans le sondage : ").strip()
-    mot_de_passe = args.mot_de_passe if args.mot_de_passe is not None else config.mot_de_passe
-
-    if not args.oui:
-        dep.sortie(f"Participant : {nom}")
-        reponse = dep.entree("Envoyer ? (O/N) ")
-        if reponse.strip().lower() not in {"o", "oui", "y", "yes"}:
-            dep.sortie("Envoi annulé : rien n'a été envoyé.")
-            return 0
-
-    dep.sortie(f"Envoi à {cible.nom}...")
-    resultat = cible.envoyer(sondage, nom, mot_de_passe, [c.libre for c in creneaux])
-    if resultat.verifie:
-        dep.sortie(f"OK : {resultat.nb_libres} créneau(x) libres enregistrés et vérifiés sur la page.")
-        return 0
-    if resultat.verifie is None:
-        dep.sortie(f"Envoyé, mais non vérifié ({resultat.detail}). Contrôlez le sondage dans le navigateur.")
-        return 0
-    dep.sortie(
-        "ATTENTION : l'envoi a été accepté mais la page ne reflète pas ce qui a été envoyé "
-        f"({resultat.detail}). Contrôlez le sondage dans le navigateur."
-    )
-    return 3
+    return _traiter(lien, cible, ctx, (args.nom or config.nom).strip())
 
 
 def main(argv: list[str] | None = None) -> int:
