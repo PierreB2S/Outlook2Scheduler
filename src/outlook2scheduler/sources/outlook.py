@@ -90,7 +90,7 @@ class OutlookCOM:
         except ImportError as exc:  # pragma: no cover - dépend du poste
             raise ErreurOutlook(
                 "pywin32 est introuvable : cet outil ne fonctionne que sous "
-                "Windows, lancé via « uv run » (ou w2m.bat)."
+                "Windows, lancé via « uv run » (ou o2s.bat)."
             ) from exc
         self._com_error = pywintypes.com_error
         try:

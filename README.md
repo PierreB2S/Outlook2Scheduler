@@ -19,18 +19,18 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
 
 ### Proxy d'entreprise
 
-- `w2m.bat` demande à uv d'utiliser les certificats Windows (`UV_SYSTEM_CERTS`, ou `UV_NATIVE_TLS` pour un uv ancien). En ligne de commande : `uv run --system-certs ...` (ou `--native-tls`).
+- `o2s.bat` demande à uv d'utiliser les certificats Windows (`UV_SYSTEM_CERTS`, ou `UV_NATIVE_TLS` pour un uv ancien). En ligne de commande : `uv run --system-certs ...` (ou `--native-tls`).
 - Côté Python, `truststore` fait utiliser les certificats Windows pour joindre When2meet.
 - Si uv ne peut pas **télécharger Python**, utilisez le Python déjà installé (3.11 ou plus) :
   ```
   uv python find
   uv venv --python "C:\chemin\vers\python.exe"
   ```
-  ou décommentez la ligne `set "UV_PYTHON=..."` dans `w2m.bat`.
+  ou décommentez la ligne `set "UV_PYTHON=..."` dans `o2s.bat`.
 
 ## Utilisation
 
-**Double-clic sur `w2m.bat`** après avoir copié le lien du sondage :
+**Double-clic sur `o2s.bat`** après avoir copié le lien du sondage :
 
 1. le lien est lu dans le presse-papiers (sinon il est demandé) ;
 2. le sondage et votre agenda sont lus, l'aperçu des plages libres s'affiche ;
@@ -39,9 +39,9 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
 Ligne de commande (même options via le `.bat`) :
 
 ```
-uv run w2m <lien> [--nom "Prénom N."] [--heures 08:30-18:00] [--jours-exclus sam,dim]
+uv run o2s <lien> [--nom "Prénom N."] [--heures 08:30-18:00] [--jours-exclus sam,dim]
                [--provisoire-libre] [--marge 15] [--mot-de-passe X] [--submit] [--oui]
-uv run w2m --agenda 2026-11-02     # diagnostic : grille Outlook d'un jour, rien n'est envoyé
+uv run o2s --agenda 2026-11-02     # diagnostic : grille Outlook d'un jour, rien n'est envoyé
 ```
 
 Sans `--submit`, l'outil affiche seulement l'aperçu.

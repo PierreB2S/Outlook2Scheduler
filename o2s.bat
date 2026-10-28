@@ -3,7 +3,7 @@ setlocal
 rem Outlook2Scheduler : remplit un sondage When2meet depuis l'agenda Outlook.
 rem Double-clic : le lien est lu dans le presse-papiers (sinon il est demande),
 rem l'apercu des plages libres s'affiche, puis "Envoyer ? (O/N)" avant tout envoi.
-rem En ligne de commande : w2m.bat [lien] [--nom "Prenom N."] [--heures 08:30-18:00] ...
+rem En ligne de commande : o2s.bat [lien] [--nom "Prenom N."] [--heures 08:30-18:00] ...
 
 cd /d "%~dp0"
 title Outlook2Scheduler
@@ -19,7 +19,7 @@ if errorlevel 1 (set "UV_NATIVE_TLS=1") else (set "UV_SYSTEM_CERTS=1")
 rem Si uv ne peut pas telecharger Python (proxy), decommentez et adaptez :
 rem set "UV_PYTHON=C:\chemin\vers\python.exe"
 
-uv run w2m %* --submit
+uv run o2s %* --submit
 set "CODE=%ERRORLEVEL%"
 goto :fin
 
@@ -30,7 +30,7 @@ echo Pour l'installer, ouvrez PowerShell et lancez :
 echo     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 echo ou, si winget est disponible :
 echo     winget install --id=astral-sh.uv -e
-echo Puis fermez cette fenetre et relancez w2m.bat.
+echo Puis fermez cette fenetre et relancez o2s.bat.
 set "CODE=9"
 
 :fin

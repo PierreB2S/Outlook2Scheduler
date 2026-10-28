@@ -1,4 +1,4 @@
-"""Ligne de commande : w2m <lien> [--nom] [--heures 08:30-18:00] [--provisoire-libre] [--submit]."""
+"""Ligne de commande : o2s <lien> [--nom] [--heures 08:30-18:00] [--provisoire-libre] [--submit]."""
 
 from __future__ import annotations
 
@@ -72,8 +72,8 @@ def _cibles_par_defaut() -> list[CibleSondage]:  # pragma: no cover
 
 def construire_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="w2m",
-        description="Remplit un sondage When2meet à partir de votre agenda Outlook. "
+        prog="o2s",
+        description="Remplit un sondage de planification (When2meet pour l'instant) à partir de votre agenda Outlook. "
         "Seule une grille libre/occupé est envoyée.",
     )
     p.add_argument("lien", nargs="?", help="lien du sondage (sinon : presse-papiers, puis question)")
