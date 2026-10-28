@@ -1,0 +1,31 @@
+[project]
+name = "outlook2when2meet"
+version = "0.1.0"
+description = "Remplit un sondage When2meet depuis l'agenda Outlook (grille libre/occupé uniquement)"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Pierre Boisseau" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pywin32>=306 ; sys_platform == 'win32'",
+    "requests>=2.31",
+    "truststore>=0.9",
+]
+
+[project.scripts]
+w2m = "outlook2when2meet.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.0,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "tzdata>=2024.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

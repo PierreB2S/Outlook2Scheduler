@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# uv / environnement virtuel
+.venv/
+.python-version
+
+# Configuration locale (nom, plage horaire, mot de passe When2meet...)
+config.toml
+
+# Divers
+*.log
+.vscode/
+.idea/
+Thumbs.db
