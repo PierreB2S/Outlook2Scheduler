@@ -20,6 +20,7 @@ CLES = {
     "ailleurs_libre": bool,
     "marge_minutes": int,
     "reseau": str,
+    "source_agenda": str,
 }
 
 
@@ -33,6 +34,7 @@ class Config:
     ailleurs_libre: bool = True
     marge_minutes: int = 0
     reseau: str = ""  # vide = mode par défaut (windows sous Windows)
+    source_agenda: str = "rendez-vous"  # ou "freebusy"
 
 
 def charger(chemin: Path | None = None) -> Config:

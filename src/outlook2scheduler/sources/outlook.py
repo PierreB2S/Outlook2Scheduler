@@ -14,7 +14,7 @@ jamais un changement d'heure : le jour du changement est lu seul et signalé.
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
-from typing import Iterable, Protocol
+from typing import Any, Iterable, Protocol
 
 from outlook2scheduler.erreurs import (
     ErreurOutlook,
@@ -80,23 +80,28 @@ def traduire_erreur_com(exc: BaseException, etape: str) -> ErreurOutlook:
     )
 
 
-class OutlookCOM:
-    """Accès réel à Outlook par COM. Non testable hors d'un poste Windows + Outlook."""
+def connecter_outlook() -> tuple[Any, type[BaseException]]:  # pragma: no cover
+    """Renvoie (Outlook.Application déjà ouvert, classe com_error)."""
+    try:
+        import pywintypes
+        import win32com.client
+    except ImportError as exc:
+        raise ErreurOutlook(
+            "pywin32 est introuvable : cet outil ne fonctionne que sous "
+            "Windows, lancé via « uv run » (ou o2s.bat)."
+        ) from exc
+    try:
+        return win32com.client.GetActiveObject("Outlook.Application"), pywintypes.com_error
+    except pywintypes.com_error as exc:
+        raise traduire_erreur_com(exc, "connexion") from exc
 
-    def __init__(self) -> None:
-        try:
-            import pywintypes  # noqa: F401
-            import win32com.client
-        except ImportError as exc:  # pragma: no cover - dépend du poste
-            raise ErreurOutlook(
-                "pywin32 est introuvable : cet outil ne fonctionne que sous "
-                "Windows, lancé via « uv run » (ou o2s.bat)."
-            ) from exc
-        self._com_error = pywintypes.com_error
-        try:
-            app = win32com.client.GetActiveObject("Outlook.Application")
-        except self._com_error as exc:
-            raise traduire_erreur_com(exc, "connexion") from exc
+
+class OutlookCOM:
+    """Accès FreeBusy réel. Utilise CurrentUser, objet protégé par Outlook :
+    peut déclencher l'alerte de sécurité (préférer la source « rendez-vous »)."""
+
+    def __init__(self) -> None:  # pragma: no cover
+        app, self._com_error = connecter_outlook()
         try:
             self._utilisateur = app.GetNamespace("MAPI").CurrentUser
         except self._com_error as exc:

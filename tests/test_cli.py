@@ -27,7 +27,7 @@ class Monde:
         self.questions: list[str] = []
         self._reponses = list(reponses)
         self.dep = Dependances(
-            fabrique_source=lambda f: SourceOutlook(self.client, f),
+            fabrique_source=lambda f, source: SourceOutlook(self.client, f),
             fabrique_cibles=lambda mode: [When2meet(self.session)],
             fuseau=fuseau,
             entree=self._entree,
@@ -196,3 +196,42 @@ def test_choix_du_mode_reseau(fuseau, tmp_path, monkeypatch, contenu, argv, atte
     m.dep.fabrique_cibles = lambda mode: modes.append(mode) or [When2meet(m.session)]
     executer([URL, *argv], m.dep)
     assert modes == [attendu]
+
+
+def _monde_rdv(fuseau, epochs, rdvs, reponses=()):
+    from outlook2scheduler.sources.outlook_rdv import RendezVous, SourceOutlookRendezVous
+
+    class Client:
+        def rendez_vous(self, debut, fin):
+            return [RendezVous(fuseau.vers_epoch(d), fuseau.vers_epoch(f), s) for d, f, s in rdvs]
+
+    m = Monde(fuseau, epochs, reponses=reponses)
+    sources = []
+    m.dep.fabrique_source = lambda f, source: sources.append(source) or SourceOutlookRendezVous(Client(), f)
+    return m, sources
+
+
+def test_source_rendez_vous_par_defaut_de_bout_en_bout(fuseau, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(9), time(10))
+    m, sources = _monde_rdv(fuseau, epochs, [(datetime(2026, 11, 2, 9, 15), datetime(2026, 11, 2, 9, 45), OCCUPE)], ["O"])
+    executer([URL, "--nom", "T", "--submit"], m.dep)
+    assert sources == ["rendez-vous"]
+    assert m.envois()[0]["availability"] == "1001"
+    assert "Agenda  : 1 rendez-vous" in m.texte
+
+
+def test_alerte_si_aucun_rendez_vous_lu(fuseau, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(9), time(10))
+    m, _ = _monde_rdv(fuseau, epochs, [])
+    executer([URL], m.dep)
+    assert "Aucun rendez-vous lu dans Outlook" in m.texte
+
+
+def test_source_freebusy_au_choix(fuseau, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(9), time(10))
+    m, sources = _monde_rdv(fuseau, epochs, [])
+    executer([URL, "--source", "freebusy"], m.dep)
+    assert sources == ["freebusy"]

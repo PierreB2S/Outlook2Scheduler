@@ -23,6 +23,7 @@ class GrilleAgenda:
 
     codes: dict[int, int] = field(default_factory=dict)
     jours_changement_heure: set[date] = field(default_factory=set)
+    nb_rendez_vous: int | None = None  # None = inconnu (source FreeBusy)
 
     def code(self, epoch: int) -> int | None:
         return self.codes.get(epoch)

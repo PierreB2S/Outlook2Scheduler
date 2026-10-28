@@ -40,7 +40,7 @@ def lire_presse_papiers() -> str:  # pragma: no cover - dépend de Windows
 class Dependances:
     """Tout ce qui touche au monde extérieur, remplaçable dans les tests."""
 
-    fabrique_source: Callable[[Fuseau], SourceAgenda] | None = None
+    fabrique_source: Callable[[Fuseau, str], SourceAgenda] | None = None
     fabrique_cibles: Callable[[str], list[CibleSondage]] | None = None
     fuseau: Fuseau = field(default_factory=FuseauSysteme)
     entree: Callable[[str], str] = input
@@ -48,10 +48,17 @@ class Dependances:
     presse_papiers: Callable[[], str] = lire_presse_papiers
 
 
-def _source_outlook(fuseau: Fuseau) -> SourceAgenda:  # pragma: no cover
-    from outlook2scheduler.sources.outlook import OutlookCOM, SourceOutlook
+SOURCES = ("rendez-vous", "freebusy")
 
-    return SourceOutlook(OutlookCOM(), fuseau)
+
+def _source_outlook(fuseau: Fuseau, source: str) -> SourceAgenda:  # pragma: no cover
+    if source == "freebusy":
+        from outlook2scheduler.sources.outlook import OutlookCOM, SourceOutlook
+
+        return SourceOutlook(OutlookCOM(), fuseau)
+    from outlook2scheduler.sources.outlook_rdv import OutlookRendezVousCOM, SourceOutlookRendezVous
+
+    return SourceOutlookRendezVous(OutlookRendezVousCOM(), fuseau)
 
 
 def _cibles_par_defaut(mode_reseau: str) -> list[CibleSondage]:  # pragma: no cover
@@ -86,6 +93,11 @@ def construire_parser() -> argparse.ArgumentParser:
         "--agenda",
         metavar="AAAA-MM-JJ",
         help="diagnostic : affiche la grille Outlook de ce jour (rien n'est envoyé)",
+    )
+    p.add_argument(
+        "--source",
+        choices=SOURCES,
+        help="lecture d'Outlook : rendez-vous (défaut, évite l'alerte de sécurité) ou freebusy",
     )
     p.add_argument(
         "--reseau",
@@ -142,13 +154,13 @@ def _obtenir_lien(args: argparse.Namespace, cibles: list[CibleSondage], dep: Dep
     raise ErreurUtilisateur("Aucun lien When2meet valide fourni.")
 
 
-def _diagnostic_agenda(jour_texte: str, dep: Dependances) -> int:
+def _diagnostic_agenda(jour_texte: str, dep: Dependances, source: str) -> int:
     try:
         jour = date.fromisoformat(jour_texte)
     except ValueError as exc:
         raise ErreurUtilisateur(f"Date invalide : {jour_texte!r} (format AAAA-MM-JJ).") from exc
     assert dep.fabrique_source is not None
-    grille = dep.fabrique_source(dep.fuseau).grille([jour])
+    grille = dep.fabrique_source(dep.fuseau, source).grille([jour])
     debut = dep.fuseau.vers_epoch(minuit(jour))
     fin = dep.fuseau.vers_epoch(minuit(jour + timedelta(days=1)))
     dep.sortie(f"Grille Outlook du {JOURS_COURTS[jour.weekday()]} {jour:%d/%m/%Y} "
@@ -159,6 +171,8 @@ def _diagnostic_agenda(jour_texte: str, dep: Dependances) -> int:
             "?" if (c := grille.code(q)) is None else CODES_LISIBLES.get(str(c), "?") for q in quarts
         )
         dep.sortie(f"  {dep.fuseau.vers_local(heure_debut):%H:%M}  {codes}")
+    if grille.nb_rendez_vous is not None:
+        dep.sortie(f"{grille.nb_rendez_vous} rendez-vous non libre(s) lu(s) ce jour-là (horaires et statut uniquement).")
     if jour in grille.jours_changement_heure:
         dep.sortie("Attention : jour de changement d'heure.")
     return 0
@@ -190,10 +204,14 @@ def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     if mode_reseau not in reseau.MODES:
         raise ErreurUtilisateur(f"Mode réseau inconnu dans la configuration : {mode_reseau!r} (windows ou python).")
 
+    source = args.source or config.source_agenda
+    if source not in SOURCES:
+        raise ErreurUtilisateur(f"Source d'agenda inconnue : {source!r} (rendez-vous ou freebusy).")
+
     if args.test_reseau:
         return _diagnostic_reseau(dep)
     if args.agenda:
-        return _diagnostic_agenda(args.agenda, dep)
+        return _diagnostic_agenda(args.agenda, dep, source)
 
     cibles = dep.fabrique_cibles(mode_reseau)
     lien, cible = _obtenir_lien(args, cibles, dep)
@@ -202,11 +220,11 @@ def executer(argv: list[str] | None, dep: Dependances | None = None) -> int:
     sondage = cible.lire(lien)
     jours = sorted({dep.fuseau.vers_local(t).date() for t in sondage.creneaux})
     dep.sortie(f"Lecture de l'agenda Outlook ({len(jours)} jour(s))...")
-    grille = dep.fabrique_source(dep.fuseau).grille(jours)
+    grille = dep.fabrique_source(dep.fuseau, source).grille(jours)
     creneaux = evaluer(sondage.creneaux, grille, regles, dep.fuseau, sondage.duree_creneau)
 
     dep.sortie("")
-    dep.sortie(formater(sondage, creneaux, regles))
+    dep.sortie(formater(sondage, creneaux, regles, grille.nb_rendez_vous))
     dep.sortie("")
 
     if not args.submit:

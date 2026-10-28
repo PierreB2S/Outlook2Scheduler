@@ -2,7 +2,7 @@
 
 Remplit automatiquement vos sondages de planification à partir de votre agenda **Outlook classique** (Windows). Pris en charge : **When2meet** (Framadate et Doodle prévus).
 
-- Lecture de l'agenda par COM (`Recipient.FreeBusy`), sans Microsoft Graph, sans extension de navigateur.
+- Lecture de l'agenda Outlook par COM, sans Microsoft Graph ni extension de navigateur : seuls l'heure de début, l'heure de fin et le statut (libre, provisoire, occupé…) de chaque rendez-vous sont lus.
 - **Confidentialité** : seule une grille libre/occupé (0/1) est envoyée. Aucun intitulé, participant ou contenu de réunion n'est lu.
 - Aperçu des plages libres et confirmation **« Envoyer ? (O/N) »** avant tout envoi, puis vérification que When2meet a bien enregistré.
 
@@ -56,10 +56,9 @@ Un créneau de 15 min est « libre » s'il est dans la plage horaire, hors jours
 ## Limites
 
 - Outlook **classique** uniquement (pas le nouvel Outlook), et il doit être **ouvert**.
-- Si Outlook affiche « Un programme tente d'accéder… », cliquez sur **Autoriser**. Si l'accès est bloqué sans alerte, c'est la politique de sécurité du poste : voir avec l'IT.
-- La grille vient des informations libre/occupé d'Outlook : au-delà de l'horizon publié (souvent 2 mois), les créneaux sont « hors grille » et marqués occupés.
+- Seul le calendrier principal est lu (pas les calendriers partagés ou secondaires).
+- Ancienne méthode disponible : `--source freebusy` (grille libre/occupé d'Outlook). Elle déclenche sur certains postes l'alerte « Un programme tente d'accéder… » ; elle est limitée à l'horizon publié et signale le jour de changement d'heure.
 - Les sondages « jours de la semaine » (sans dates) sont refusés.
-- Le **jour même** d'un changement d'heure est signalé dans l'aperçu : vérifiez-le à la main.
 - When2meet n'a pas d'API officielle : l'outil utilise les mêmes requêtes que la page. Si le site change, un message « format de page changé » s'affiche.
 - **Envoyer remplace** vos disponibilités précédentes dans ce sondage.
 

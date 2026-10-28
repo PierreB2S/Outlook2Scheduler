@@ -25,8 +25,10 @@ Attendu (une ligne par heure, un caractère par quart d'heure) :
   10:00  XX..
   14:00  pppp
 ```
-- Alerte « Un programme tente d'accéder… » : cliquer **Autoriser**, puis noter si elle revient à chaque lancement.
-- Décalage d'une ou deux heures, ou mauvais jour : **KO à me remonter** (problème de fuseau dans l'appel COM).
+et une ligne indiquant au moins « 2 rendez-vous non libre(s) lu(s) ce jour-là ».
+- Aucune alerte « Un programme tente d'accéder… » ne doit apparaître. Si elle apparaît : **KO à me remonter**.
+- « 0 rendez-vous » alors que Test A et Test B existent : **KO à me remonter** (filtre de dates d'Outlook).
+- Décalage d'une ou deux heures, ou mauvais jour : **KO à me remonter** (problème de conversion d'heure).
 - Outlook fermé : relancer après avoir fermé Outlook → message « Outlook ne semble pas ouvert ».
 
 ## 2. Sondage bidon

@@ -35,10 +35,14 @@ def plages_libres(creneaux: list[Creneau]) -> dict[date, list[tuple[datetime, da
     return dict(sorted(plages.items()))
 
 
-def formater(sondage: Sondage, creneaux: list[Creneau], regles: Regles) -> str:
+def formater(sondage: Sondage, creneaux: list[Creneau], regles: Regles, nb_rendez_vous: int | None = None) -> str:
     lignes = [
         f"Sondage : {sondage.titre}",
         f"Règles  : {regles.decrire()}",
+    ]
+    if nb_rendez_vous is not None:
+        lignes.append(f"Agenda  : {nb_rendez_vous} rendez-vous non libre(s) sur la période (horaires et statut uniquement)")
+    lignes += [
         "",
         "Plages libres (heure de ce poste) :",
     ]
@@ -60,6 +64,11 @@ def formater(sondage: Sondage, creneaux: list[Creneau], regles: Regles) -> str:
     for jour in jours_dst:
         avertissements.append(
             f"{_jour(jour)} est un jour de changement d'heure : vérifiez ce jour-là à la main."
+        )
+    if nb_rendez_vous == 0:
+        avertissements.append(
+            "Aucun rendez-vous lu dans Outlook sur la période. Si votre agenda n'est pas vide, "
+            "répondez N et vérifiez avec : o2s.bat --agenda AAAA-MM-JJ"
         )
     if nb_libres == 0:
         avertissements.append("Aucun créneau libre : l'envoi effacerait vos disponibilités existantes.")

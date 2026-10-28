@@ -22,5 +22,8 @@ ailleurs_libre = true
 # Marge en minutes avant et après chaque réunion (0 = aucune)
 marge_minutes = 0
 
+# Lecture d'Outlook : "rendez-vous" (défaut, sans alerte de sécurité) ou "freebusy"
+source_agenda = "rendez-vous"
+
 # Accès Internet : "windows" (comme Edge, gère le proxy d'entreprise ; défaut) ou "python"
 reseau = "windows"
