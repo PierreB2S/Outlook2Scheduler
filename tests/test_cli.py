@@ -255,3 +255,19 @@ def test_config_avec_bom_du_bloc_notes(tmp_path):
     fichier = tmp_path / "config.toml"
     fichier.write_text('heures = "08:00-12:00, 14:00-18:00"\n', encoding="utf-8-sig")
     assert charger(fichier).heures == "08:00-12:00, 14:00-18:00"
+
+
+@pytest.mark.parametrize("argv,alerte", [(["--source", "freebusy"], True), ([], False)])
+def test_alerte_teletravail_avec_freebusy(fuseau, tmp_path, monkeypatch, argv, alerte):
+    # Bloc télétravail 9h-12h contenant une réunion 10h-10h30. Le faux Outlook
+    # fusionne comme le redoute la macro VBA : « travaille ailleurs » masque la réunion.
+    from outlook2scheduler.sources.base import AILLEURS
+
+    monkeypatch.chdir(tmp_path)
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(9), time(12))
+    m = Monde(fuseau, epochs, [
+        (datetime(2026, 11, 2, 9), datetime(2026, 11, 2, 12), AILLEURS),
+        (datetime(2026, 11, 2, 10), datetime(2026, 11, 2, 10, 30), OCCUPE),
+    ])
+    executer([URL, *argv], m.dep)
+    assert ("12 créneau(x) libre(s) dans des blocs « travaille ailleurs »" in m.texte) is alerte

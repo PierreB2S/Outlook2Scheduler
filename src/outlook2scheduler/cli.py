@@ -19,7 +19,7 @@ from outlook2scheduler.config import Config, charger
 from outlook2scheduler.erreurs import ErreurUtilisateur
 from outlook2scheduler.registre import Registre
 from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_jours
-from outlook2scheduler.sources.base import PAS_SECONDES, SourceAgenda
+from outlook2scheduler.sources.base import AILLEURS, PAS_SECONDES, GrilleAgenda, SourceAgenda
 from outlook2scheduler.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
 
 CODES_LISIBLES = {"0": ".", "1": "p", "2": "X", "3": "A", "4": "a"}
@@ -221,6 +221,28 @@ def _oui(reponse: str) -> bool:
     return reponse.strip().lower() in {"o", "oui", "y", "yes"}
 
 
+def _alertes_source(ctx: Contexte, grille: GrilleAgenda, creneaux: list, duree: int) -> list[str]:
+    """Source freebusy : Outlook fusionne lui-même les rendez-vous qui se chevauchent.
+
+    Une réunion posée dans un bloc « travaille ailleurs » (télétravail) risque d'y
+    être masquée : on signale les créneaux déclarés libres à cause d'un tel bloc.
+    La source « rendez-vous » n'est pas concernée (chaque rendez-vous est lu).
+    """
+    if ctx.source != "freebusy" or not ctx.regles.ailleurs_libre:
+        return []
+    n = sum(
+        1 for c in creneaux
+        if c.libre and any(grille.code(q) == AILLEURS for q in range(c.epoch, c.epoch + duree, PAS_SECONDES))
+    )
+    if not n:
+        return []
+    return [
+        f"{n} créneau(x) libre(s) dans des blocs « travaille ailleurs » (télétravail), lus avec la "
+        "source freebusy : Outlook peut y masquer une réunion qui chevauche le bloc. Vérifiez-les, "
+        'ou utilisez source_agenda = "rendez-vous" (défaut), qui voit chaque réunion.'
+    ]
+
+
 def _traiter(lien: str, cible: CibleSondage, ctx: Contexte, nom: str, actualisation: bool = False) -> int:
     """Lit le sondage et l'agenda, affiche l'aperçu et l'écart, puis envoie si demandé."""
     dep, args = ctx.dep, ctx.args
@@ -244,7 +266,8 @@ def _traiter(lien: str, cible: CibleSondage, ctx: Contexte, nom: str, actualisat
         ]
 
     dep.sortie("")
-    dep.sortie(formater(sondage, creneaux, ctx.regles, grille.nb_rendez_vous, detail=not actualisation))
+    alertes = _alertes_source(ctx, grille, creneaux, sondage.duree_creneau)
+    dep.sortie(formater(sondage, creneaux, ctx.regles, grille.nb_rendez_vous, detail=not actualisation, alertes=alertes))
     if nom:
         dep.sortie("")
         dep.sortie(formater_ecart(creneaux, avant, nom))

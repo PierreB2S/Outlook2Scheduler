@@ -31,6 +31,18 @@ et une ligne indiquant au moins « 2 rendez-vous non libre(s) lu(s) ce jour-là 
 - Décalage d'une ou deux heures, ou mauvais jour : **KO à me remonter** (problème de conversion d'heure).
 - Outlook fermé : relancer après avoir fermé Outlook → message « Outlook ne semble pas ouvert ».
 
+### 1 bis. Réunion dans un bloc de télétravail
+
+Créez à J+1 un rendez-vous « Test TT » de 09:00 à 12:00 affiché **Travaille ailleurs**, et dans ce bloc une réunion « Test C » de 10:00 à 10:30 affichée **Occupé**. Comparez les deux sources :
+
+```
+o2s.bat --agenda AAAA-MM-JJ                     (date de J+1, source rendez-vous)
+o2s.bat --agenda AAAA-MM-JJ --source freebusy
+```
+
+- Source rendez-vous, attendu : `09:00  aaaa`, puis `10:00  XXaa`, puis `11:00  aaaa`. La réunion est visible.
+- Source freebusy : si la ligne de 10:00 affiche `aaaa`, Outlook masque la réunion sous le télétravail, comme dans la macro VBA de votre collègue. Notez ce résultat dans votre retour. L'outil affiche alors un avertissement dans l'aperçu, et c'est pour cette raison que la source par défaut est « rendez-vous ».
+
 ## 2. Sondage bidon
 
 Sur https://www.when2meet.com, créer « Test o2s » :

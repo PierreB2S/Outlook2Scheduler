@@ -49,6 +49,7 @@ def formater(
     regles: Regles,
     nb_rendez_vous: int | None = None,
     detail: bool = True,
+    alertes: list[str] | None = None,
 ) -> str:
     lignes = [
         f"Sondage : {sondage.titre}",
@@ -65,7 +66,7 @@ def formater(
     lignes += ["", f"Total : {nb_libres} créneau(x) de 15 min libres sur {len(creneaux)}."]
 
     motifs = Counter(c.motif for c in creneaux)
-    avertissements: list[str] = []
+    avertissements: list[str] = list(alertes or [])
     if motifs[Motif.HORS_GRILLE]:
         avertissements.append(
             f"{motifs[Motif.HORS_GRILLE]} créneau(x) hors de la grille Outlook "

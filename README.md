@@ -89,7 +89,7 @@ Un créneau de 15 min est « libre » s'il est entièrement dans une des plages 
 
 - Outlook **classique** uniquement (pas le nouvel Outlook), et il doit être **ouvert**.
 - Seul le calendrier principal est lu (pas les calendriers partagés ou secondaires).
-- Ancienne méthode disponible : `--source freebusy` (grille libre/occupé d'Outlook). Elle déclenche sur certains postes l'alerte « Un programme tente d'accéder… » ; elle est limitée à l'horizon publié et signale le jour de changement d'heure.
+- Ancienne méthode disponible : `--source freebusy` (grille libre/occupé d'Outlook). Elle déclenche sur certains postes l'alerte « Un programme tente d'accéder… » ; elle est limitée à l'horizon publié et signale le jour de changement d'heure. Surtout, Outlook y fusionne lui-même les rendez-vous qui se chevauchent : une réunion posée dans un bloc « travaille ailleurs » (télétravail) risque d'être masquée et le créneau proposé à tort. L'aperçu le signale (« créneau(x) libre(s) dans des blocs travaille ailleurs »). La source par défaut, « rendez-vous », lit chaque réunion et n'a pas ce défaut.
 - Les sondages « jours de la semaine » (sans dates) sont refusés.
 - When2meet n'a pas d'API officielle : l'outil utilise les mêmes requêtes que la page. Si le site change, un message « format de page changé » s'affiche.
 - **Envoyer remplace** vos disponibilités précédentes dans ce sondage.
