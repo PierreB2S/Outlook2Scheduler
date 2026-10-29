@@ -43,7 +43,7 @@ def test_plage_horaire(fuseau):
 
 def test_plage_jusqu_a_minuit(fuseau):
     g = grille_journee(fuseau)
-    assert un(fuseau, g, 23, 45, heure_debut=time(20), heure_fin=time(0)).libre
+    assert un(fuseau, g, 23, 45, plages=((time(20), time(0)),)).libre
 
 
 def test_jours_exclus(fuseau):
@@ -85,17 +85,45 @@ def test_hors_grille_marque_occupe(fuseau):
 
 
 def test_parse_heures():
-    assert parse_heures("08:30-18:00") == (time(8, 30), time(18))
-    assert parse_heures(" 9h00 - 17h30 ") == (time(9), time(17, 30))
-    assert parse_heures("20:00-24:00") == (time(20), time(0))
-    for faux in ["8-18", "25:00-26:00", ""]:
+    assert parse_heures("08:30-18:00") == ((time(8, 30), time(18)),)
+    assert parse_heures(" 9h00 - 17h30 ") == ((time(9), time(17, 30)),)
+    assert parse_heures("20:00-24:00") == ((time(20), time(0)),)
+    for faux in ["8-18", "25:00-26:00", "", " , ", "08:00-12:00, midi"]:
         with pytest.raises(ErreurConfig):
             parse_heures(faux)
 
 
+def test_parse_plusieurs_plages():
+    pause_midi = ((time(8), time(12)), (time(14), time(18)))
+    assert parse_heures("08:00-12:00, 14:00-18:00") == pause_midi
+    assert parse_heures(["14:00-18:00", "08:00-12:00"]) == pause_midi  # liste TOML, ordre libre
+    # Plages qui se touchent ou se chevauchent : fusionnées.
+    assert parse_heures("08:00-12:00,12:00-14:00") == ((time(8), time(14)),)
+    assert parse_heures("08:00-13:00,12:00-14:00,20:00-24:00") == ((time(8), time(14)), (time(20), time(0)))
+
+
+def test_pause_de_midi_exclue(fuseau):
+    g = grille_journee(fuseau)
+    regles = {"plages": parse_heures("08:00-12:00, 14:00-18:00")}
+    assert un(fuseau, g, 11, 45, **regles).libre  # se termine à 12:00 pile
+    assert un(fuseau, g, 12, 0, **regles).motif is Motif.HORS_PLAGE
+    assert un(fuseau, g, 13, 45, **regles).motif is Motif.HORS_PLAGE
+    assert un(fuseau, g, 14, 0, **regles).libre
+    assert "08:00-12:00, 14:00-18:00" in Regles(**regles).decrire()
+
+
+def test_creneau_d_une_heure_a_cheval_sur_la_pause(fuseau):
+    g = grille_journee(fuseau)
+    regles = Regles(plages=parse_heures("08:00-12:00, 14:00-18:00"))
+    c = evaluer([slot(fuseau, 11, 30)], g, regles, fuseau, duree_slot=3600)[0]
+    assert c.motif is Motif.HORS_PLAGE
+
+
 def test_plage_vide_refusee():
     with pytest.raises(ErreurConfig):
-        Regles(heure_debut=time(18), heure_fin=time(9))
+        Regles(plages=((time(18), time(9)),))
+    with pytest.raises(ErreurConfig):
+        parse_heures("08:00-12:00, 18:00-09:00")
 
 
 def test_parse_jours():

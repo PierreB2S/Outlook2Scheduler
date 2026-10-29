@@ -14,7 +14,7 @@ FICHIER_PAR_DEFAUT = Path("config.toml")
 CLES = {
     "nom": str,
     "mot_de_passe": str,
-    "heures": str,
+    "heures": (list, str),
     "jours_exclus": (list, str),
     "provisoire_libre": bool,
     "ailleurs_libre": bool,
@@ -28,7 +28,7 @@ CLES = {
 class Config:
     nom: str = ""
     mot_de_passe: str = ""
-    heures: str = "08:30-18:00"
+    heures: list[str] | str = "08:30-18:00"  # une plage, ou plusieurs pour exclure la pause de midi
     jours_exclus: list[str] | str = ("sam", "dim")  # type: ignore[assignment]
     provisoire_libre: bool = False
     ailleurs_libre: bool = True
@@ -44,7 +44,7 @@ def charger(chemin: Path | None = None) -> Config:
             raise ErreurConfig(f"Fichier de configuration introuvable : {fichier}")
         return Config()
     try:
-        donnees: dict[str, Any] = tomllib.loads(fichier.read_text(encoding="utf-8"))
+        donnees: dict[str, Any] = tomllib.loads(fichier.read_text(encoding="utf-8-sig"))  # utf-8-sig : tolère le BOM du Bloc-notes
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         raise ErreurConfig(f"{fichier} est mal formé : {exc}") from exc
 

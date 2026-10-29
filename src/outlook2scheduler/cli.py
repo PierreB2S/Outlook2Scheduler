@@ -79,7 +79,7 @@ def construire_parser() -> argparse.ArgumentParser:
     p.add_argument("lien", nargs="?", help="lien du sondage (sinon : presse-papiers, puis question)")
     p.add_argument("--nom", help="votre nom dans le sondage")
     p.add_argument("--mot-de-passe", dest="mot_de_passe", help="mot de passe When2meet (facultatif)")
-    p.add_argument("--heures", help="plage horaire acceptée, ex. 08:30-18:00")
+    p.add_argument("--heures", help='plage(s) horaire(s) acceptée(s), ex. 08:30-18:00 ou "08:00-12:00,14:00-18:00"')
     p.add_argument("--jours-exclus", dest="jours_exclus", help="ex. sam,dim (ou « aucun »)")
     p.add_argument(
         "--provisoire-libre",
@@ -130,13 +130,12 @@ def construire_parser() -> argparse.ArgumentParser:
 
 
 def regles_depuis(config: Config, args: argparse.Namespace) -> Regles:
-    debut, fin = parse_heures(args.heures or config.heures)
+    plages = parse_heures(args.heures or config.heures)
     jours = parse_jours(args.jours_exclus if args.jours_exclus is not None else config.jours_exclus)
     provisoire = config.provisoire_libre if args.provisoire_libre is None else args.provisoire_libre
     marge = config.marge_minutes if args.marge_minutes is None else args.marge_minutes
     return Regles(
-        heure_debut=debut,
-        heure_fin=fin,
+        plages=plages,
         jours_exclus=jours,
         provisoire_libre=provisoire,
         ailleurs_libre=config.ailleurs_libre,

@@ -34,7 +34,7 @@ class Registre:
         if not self.chemin.exists():
             return []
         try:
-            donnees = json.loads(self.chemin.read_text(encoding="utf-8"))
+            donnees = json.loads(self.chemin.read_text(encoding="utf-8-sig"))
             return [EntreeSondage(**e) for e in donnees]
         except (ValueError, TypeError) as exc:
             raise ErreurConfig(

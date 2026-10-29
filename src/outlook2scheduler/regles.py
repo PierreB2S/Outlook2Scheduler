@@ -30,25 +30,34 @@ NOMS_JOURS = {
 }
 
 
+Plage = tuple[time, time]  # (début, fin) ; fin = time(0) signifie minuit (24:00)
+
+
 @dataclass(frozen=True)
 class Regles:
-    heure_debut: time = time(8, 30)
-    heure_fin: time = time(18, 0)
+    # Plages horaires acceptées, ex. ((8h, 12h), (14h, 18h)) pour exclure la pause de midi.
+    plages: tuple[Plage, ...] = ((time(8, 30), time(18, 0)),)
     jours_exclus: frozenset[int] = field(default_factory=lambda: frozenset({5, 6}))
     provisoire_libre: bool = False
     ailleurs_libre: bool = True
     marge_minutes: int = 0
 
     def __post_init__(self) -> None:
-        if self.heure_fin <= self.heure_debut and self.heure_fin != time(0):
-            raise ErreurConfig("La plage horaire est vide : l'heure de fin doit suivre l'heure de début.")
+        if not self.plages:
+            raise ErreurConfig("Aucune plage horaire définie (ex. heures = \"08:30-18:00\").")
+        for debut, fin in self.plages:
+            if fin <= debut and fin != time(0):
+                raise ErreurConfig(
+                    f"Plage horaire vide : {debut:%H:%M}-{fin:%H:%M} "
+                    "(l'heure de fin doit suivre l'heure de début)."
+                )
         if self.marge_minutes < 0:
             raise ErreurConfig("La marge doit être positive ou nulle.")
 
     def decrire(self) -> str:
         jours = ", ".join(k for k, v in NOMS_JOURS.items() if len(k) == 3 and v in self.jours_exclus)
         morceaux = [
-            f"{self.heure_debut:%H:%M}-{self.heure_fin:%H:%M}",
+            ", ".join(f"{d:%H:%M}-{'24:00' if f == time(0) else format(f, '%H:%M')}" for d, f in self.plages),
             f"jours exclus : {jours or 'aucun'}",
             f"provisoire = {'libre' if self.provisoire_libre else 'occupé'}",
         ]
@@ -57,10 +66,13 @@ class Regles:
         return " | ".join(morceaux)
 
 
-def parse_heures(texte: str) -> tuple[time, time]:
+def parse_plage(texte: str) -> Plage:
     m = re.fullmatch(r"\s*(\d{1,2})[:hH](\d{2})\s*-\s*(\d{1,2})[:hH](\d{2})\s*", texte or "")
     if not m:
-        raise ErreurConfig(f"Plage horaire illisible : {texte!r} (attendu par ex. 08:30-18:00).")
+        raise ErreurConfig(
+            f"Plage horaire illisible : {texte!r} (attendu par ex. 08:30-18:00, "
+            "ou 08:00-12:00, 14:00-18:00 pour exclure la pause de midi)."
+        )
 
     h1, m1, h2, m2 = (int(x) for x in m.groups())
     try:
@@ -69,6 +81,33 @@ def parse_heures(texte: str) -> tuple[time, time]:
     except ValueError as exc:
         raise ErreurConfig(f"Plage horaire invalide : {texte!r}.") from exc
     return debut, fin
+
+
+def parse_heures(valeur: str | list[str]) -> tuple[Plage, ...]:
+    """« 08:00-12:00, 14:00-18:00 » ou ["08:00-12:00", "14:00-18:00"] -> plages triées et fusionnées."""
+    elements = valeur.split(",") if isinstance(valeur, str) else [str(v) for v in valeur]
+    elements = [e for e in elements if e.strip()]
+    if not elements:
+        raise ErreurConfig("Aucune plage horaire définie (ex. heures = \"08:30-18:00\").")
+    plages = sorted(parse_plage(e) for e in elements)
+
+    # Plages qui se chevauchent ou se touchent : fusionnées (un créneau à cheval reste possible).
+    fusion: list[list[int]] = []
+    for debut, fin in plages:
+        d, f = _minutes(debut), _minutes(fin) or 24 * 60
+        if f <= d:
+            raise ErreurConfig(
+                f"Plage horaire vide : {debut:%H:%M}-{fin:%H:%M} (l'heure de fin doit suivre l'heure de début)."
+            )
+        if fusion and d <= fusion[-1][1]:
+            fusion[-1][1] = max(fusion[-1][1], f)
+        else:
+            fusion.append([d, f])
+    return tuple((_heure(d), _heure(f)) for d, f in fusion)
+
+
+def _heure(minutes: int) -> time:
+    return time(0) if minutes >= 24 * 60 else time(minutes // 60, minutes % 60)
 
 
 def parse_jours(valeur: str | list[str] | None) -> frozenset[int]:
@@ -127,8 +166,7 @@ def _minutes(t: time) -> int:
 def _dans_plage(debut: datetime, duree_s: int, regles: Regles) -> bool:
     d = _minutes(debut.time())
     f = d + duree_s // 60
-    fin_plage = _minutes(regles.heure_fin) or 24 * 60
-    return d >= _minutes(regles.heure_debut) and f <= fin_plage
+    return any(d >= _minutes(p_debut) and f <= (_minutes(p_fin) or 24 * 60) for p_debut, p_fin in regles.plages)
 
 
 def _quarts(debut: int, fin: int) -> range:

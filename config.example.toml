@@ -7,7 +7,9 @@ nom = "Prénom N."
 # Mot de passe When2meet (facultatif, propre à chaque sondage ; laisser vide en général)
 mot_de_passe = ""
 
-# Plage horaire acceptée (heure de ce poste)
+# Plage horaire acceptée (heure de ce poste).
+# Plusieurs plages séparées par une virgule, par ex. pour exclure la pause de midi :
+#   heures = "08:00-12:00, 14:00-18:00"
 heures = "08:30-18:00"
 
 # Jours jamais proposés : lun, mar, mer, jeu, ven, sam, dim (ou [] pour aucun)

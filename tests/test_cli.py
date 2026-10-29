@@ -147,6 +147,18 @@ def test_configuration(fuseau, tmp_path, monkeypatch):
     assert m.envois()[0]["availability"] == "0011"
 
 
+@pytest.mark.parametrize(
+    "heures", ['"11:00-12:00, 14:00-15:00"', '["14:00-15:00", "11:00-12:00"]']
+)
+def test_configuration_pause_de_midi(fuseau, tmp_path, monkeypatch, heures):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.toml").write_text(f'nom = "N"\nheures = {heures}\n', encoding="utf-8")
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(11), time(15))  # 16 créneaux
+    m = Monde(fuseau, epochs, reponses=["O"])
+    executer([URL, "--submit"], m.dep)
+    assert m.envois()[0]["availability"] == "1111" + "0" * 8 + "1111"
+
+
 def test_configuration_cle_inconnue(fuseau, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "config.toml").write_text('nmo = "faute de frappe"\n', encoding="utf-8")
@@ -235,3 +247,11 @@ def test_source_freebusy_au_choix(fuseau, tmp_path, monkeypatch):
     m, sources = _monde_rdv(fuseau, epochs, [])
     executer([URL, "--source", "freebusy"], m.dep)
     assert sources == ["freebusy"]
+
+
+def test_config_avec_bom_du_bloc_notes(tmp_path):
+    from outlook2scheduler.config import charger
+
+    fichier = tmp_path / "config.toml"
+    fichier.write_text('heures = "08:00-12:00, 14:00-18:00"\n', encoding="utf-8-sig")
+    assert charger(fichier).heures == "08:00-12:00, 14:00-18:00"

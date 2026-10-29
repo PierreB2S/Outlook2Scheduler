@@ -81,7 +81,9 @@ o2s.bat --oublier          # demande lequel retirer (ou : --oublier 2, --oublier
 
 ### Règles de disponibilité
 
-Un créneau de 15 min est « libre » s'il est dans la plage horaire, hors jours exclus, et qu'Outlook le donne libre sur toute sa durée (et sur la marge éventuelle). « Provisoire » est occupé par défaut, « absent » toujours occupé, « travaille ailleurs » libre par défaut (`ailleurs_libre`).
+Plage horaire : `heures = "08:30-18:00"` dans `config.toml`. Pour exclure la pause de midi, mettez plusieurs plages séparées par une virgule : `heures = "08:00-12:00, 14:00-18:00"` (ou `--heures "08:00-12:00,14:00-18:00"`).
+
+Un créneau de 15 min est « libre » s'il est entièrement dans une des plages horaires, hors jours exclus, et qu'Outlook le donne libre sur toute sa durée (et sur la marge éventuelle). « Provisoire » est occupé par défaut, « absent » toujours occupé, « travaille ailleurs » libre par défaut (`ailleurs_libre`).
 
 ## Limites
 
