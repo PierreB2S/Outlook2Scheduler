@@ -30,6 +30,18 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
   ```
   ou décommentez la ligne `set "UV_PYTHON=..."` dans `o2s.bat`.
 
+### Version autonome (o2s.exe, sans uv ni Python)
+
+Pour un poste où l'on ne peut rien installer, ou pour donner l'outil à un collègue :
+
+1. Sur un PC Windows où uv fonctionne, double-clic sur **`construire-exe.bat`**.
+2. Il produit `dist\Outlook2Scheduler.zip` (environ 11 Mo) : `o2s.exe`, son dossier `_internal`, `o2s-actualiser.bat`, `config.example.toml` et `LISEZMOI.txt`.
+3. Sur le poste cible, décompresser le zip et double-cliquer sur `o2s.exe`. L'exe fait exactement ce que fait `o2s.bat`. `config.toml` et `sondages.json` sont lus et écrits à côté de l'exe.
+
+Pour mettre à jour l'outil, remplacez seulement `o2s.exe` et `_internal` : votre config et vos sondages suivis sont conservés.
+
+L'exe n'est pas signé. Windows peut afficher « Windows a protégé votre ordinateur » (cliquer sur « Informations complémentaires », puis « Exécuter quand même »). Un poste verrouillé (AppLocker, antivirus) peut aussi le bloquer : dans ce cas, utilisez `o2s.bat`.
+
 ## Utilisation
 
 **Double-clic sur `o2s.bat`** après avoir copié le lien du sondage :

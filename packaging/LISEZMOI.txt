@@ -1,0 +1,37 @@
+Outlook2Scheduler - version autonome (aucune installation, ni Python ni uv)
+==========================================================================
+
+Remplit vos sondages When2meet depuis votre agenda Outlook classique.
+Seule une grille libre/occupé est envoyée : aucun intitulé, participant ou
+contenu de réunion ne sort du poste.
+
+Première fois
+-------------
+1. Décompressez le dossier où vous voulez (par ex. Documents\Outlook2Scheduler).
+   Gardez o2s.exe et le dossier _internal ensemble.
+2. Facultatif : copiez config.example.toml en config.toml et mettez-y votre
+   nom et votre plage horaire (sinon le nom est demandé).
+
+Utilisation
+-----------
+- Outlook classique doit être ouvert.
+- Copiez le lien du sondage When2meet, puis double-cliquez sur o2s.exe.
+  L'aperçu s'affiche, rien n'est envoyé sans « O » à « Envoyer ? (O/N) ».
+- Relancer o2s.exe sur le même lien remplace entièrement vos disponibilités
+  en ligne par la version à jour de votre agenda (même nom, pas de doublon).
+- o2s-actualiser.bat met à jour d'un coup tous les sondages déjà envoyés.
+- Après l'envoi, rechargez la page du sondage (F5) pour voir le résultat.
+
+En ligne de commande (cmd, dans ce dossier) :
+    o2s.exe --liste           sondages suivis
+    o2s.exe --oublier         retirer un sondage une fois la date choisie
+    o2s.exe --test-reseau     vérifier l'accès à When2meet, rien n'est envoyé
+    o2s.exe --agenda 2026-11-02   grille Outlook d'un jour, rien n'est envoyé
+    o2s.exe --help            toutes les options
+
+config.toml et sondages.json restent dans ce dossier : pour passer à une
+nouvelle version, remplacez seulement o2s.exe et _internal.
+
+Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur
+« Informations complémentaires » puis « Exécuter quand même ». Si le poste
+bloque l'exécutable (stratégie d'entreprise), utilisez la version o2s.bat.
