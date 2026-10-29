@@ -34,7 +34,7 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
 
 Pour un poste où l'on ne peut rien installer, ou pour donner l'outil à un collègue :
 
-1. Sur un PC Windows avec uv et un accès internet sans restriction (PC personnel par exemple, **pas le poste verrouillé** : il faut pouvoir télécharger PyInstaller), double-clic sur **`construire-exe.bat`**.
+1. Sur un PC Windows avec uv, double-clic sur **`construire-exe.bat`**. PyInstaller et les dépendances sont installés dans un environnement temporaire, depuis l'index de paquets configuré pour uv sur ce poste (PyPI ou dépôt interne d'entreprise) ; `uv.lock` et `.venv` ne sont pas modifiés. En cas d'échec de téléchargement, le script affiche les variables proxy/uv utiles au diagnostic.
 2. Il produit `dist\Outlook2Scheduler.zip` (environ 11 Mo) : `o2s.exe`, son dossier `_internal`, `o2s-actualiser.bat`, `config.example.toml` et `LISEZMOI.txt`.
 3. Sur le poste cible, décompresser le zip et double-cliquer sur `o2s.exe`. L'exe fait exactement ce que fait `o2s.bat`. `config.toml` et `sondages.json` sont lus et écrits à côté de l'exe.
 
