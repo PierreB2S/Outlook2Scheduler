@@ -30,7 +30,7 @@ uv run --no-project --python ">=3.11" ^
     --with "pyinstaller>=6.10" --with "pywin32>=306" --with "requests>=2.31" --with "truststore>=0.9" ^
     pyinstaller --noconfirm --clean --onedir --console ^
     --paths src --hidden-import win32timezone --exclude-module setuptools --exclude-module pkg_resources ^
-    --name o2s --distpath dist --workpath build\pyinstaller --specpath build ^
+    --version-file "%CD%\packaging\version_info.txt" --name o2s --distpath dist --workpath build\pyinstaller --specpath build ^
     packaging\o2s_exe.py
 if errorlevel 1 goto :echec
 

@@ -33,3 +33,13 @@ def test_travaille_dans_le_dossier_de_l_exe(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path.parent)
     assert exe.principal() == 0
     assert recu == {"argv": ["--liste", "--submit"], "dossier": str(tmp_path)}
+
+
+def test_version_de_l_exe_alignee():
+    from pathlib import Path
+
+    from outlook2scheduler import __version__
+
+    infos = (Path(__file__).parent.parent / "packaging" / "version_info.txt").read_text(encoding="utf-8")
+    assert f"StringStruct('FileVersion', '{__version__}')" in infos
+    assert f"filevers=({', '.join(__version__.split('.'))}, 0)" in infos
