@@ -13,6 +13,13 @@ from pathlib import Path
 
 from outlook2scheduler.cli import main
 
+try:
+    # pywin32 charge ce module au dernier moment pour convertir les dates COM
+    # (début/fin des rendez-vous) : l'importer ici le fait inclure dans l'exe.
+    import win32timezone  # noqa: F401
+except ImportError:  # pragma: no cover - hors Windows
+    pass
+
 
 def dossier_programme() -> Path:
     if getattr(sys, "frozen", False):
