@@ -50,8 +50,11 @@ goto :fin
 echo.
 echo La construction a echoue.
 echo Si l'erreur parle de telechargement ("Failed to fetch", "tcp connect error") :
-echo uv n'a pas pu joindre le depot de paquets. Elements utiles :
+echo uv n'a pas pu joindre le depot de paquets.
 echo.
+echo  - Cause la plus frequente : le depot interne est momentanement
+echo    indisponible, ou le poste est hors reseau d'entreprise (VPN coupe).
+echo    Verifiez son adresse dans Edge, puis relancez plus tard.
 echo  - Variables proxy et uv de cette fenetre :
 set | findstr /i /b "HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY UV_" 2>nul
 echo.
