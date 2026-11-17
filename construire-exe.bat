@@ -65,5 +65,6 @@ set "CODE=1"
 
 :fin
 echo.
-pause
+rem Construction automatique (GitHub Actions) : pas de pause.
+if not defined O2S_SANS_PAUSE pause
 exit /b %CODE%

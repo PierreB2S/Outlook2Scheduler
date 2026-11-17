@@ -1,0 +1,63 @@
+# Construit o2s.exe sur une machine Windows de GitHub.
+# - Lancement manuel (onglet Actions > « Construire o2s.exe » > Run workflow) :
+#   le zip est disponible en artefact du lancement, rien n'est publié.
+# - Étiquette vX.Y.Z poussée (git tag v0.1.0 && git push origin v0.1.0) :
+#   une Release est créée avec Outlook2Scheduler-vX.Y.Z.zip en téléchargement.
+name: Construire o2s.exe
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Tests
+        run: uv run pytest -q
+
+      - name: Version de l'étiquette = version de l'outil
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version=$(uv run python -c "import outlook2scheduler as o; print(o.__version__)")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "L'étiquette $GITHUB_REF_NAME ne correspond pas à la version $version (src/outlook2scheduler/__init__.py)."
+            exit 1
+          fi
+
+      - name: Construction
+        shell: cmd
+        env:
+          O2S_SANS_PAUSE: "1"
+        run: construire-exe.bat
+
+      - name: Vérification de l'exe
+        shell: cmd
+        run: dist\Outlook2Scheduler\o2s.exe --version
+
+      - name: Zip en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Outlook2Scheduler
+          path: dist/Outlook2Scheduler.zip
+
+      - name: Publication de la Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip="Outlook2Scheduler-$GITHUB_REF_NAME.zip"
+          mv dist/Outlook2Scheduler.zip "$zip"
+          gh release create "$GITHUB_REF_NAME" "$zip" \
+            --title "Outlook2Scheduler $GITHUB_REF_NAME" \
+            --notes "Version autonome pour Windows : décompressez le zip puis double-cliquez sur o2s.exe (Outlook classique ouvert). Aucune installation nécessaire. Mode d'emploi : LISEZMOI.txt dans le zip."
