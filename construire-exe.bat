@@ -40,7 +40,9 @@ copy /y packaging\o2s-actualiser.bat dist\Outlook2Scheduler\ >nul
 copy /y packaging\LISEZMOI.txt dist\Outlook2Scheduler\ >nul
 copy /y LICENSE dist\Outlook2Scheduler\LICENSE.txt >nul
 
-powershell -NoProfile -Command "Compress-Archive -Path 'dist\Outlook2Scheduler' -DestinationPath 'dist\Outlook2Scheduler.zip' -Force"
+rem tar.exe (Windows 10 et 11) produit un zip standard (chemins en /).
+tar.exe -a -c -f dist\Outlook2Scheduler.zip -C dist Outlook2Scheduler
+if errorlevel 1 goto :echec
 echo.
 echo Pret : dist\Outlook2Scheduler.zip
 set "CODE=0"

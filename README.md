@@ -32,7 +32,18 @@ Au premier lancement, uv installe Python et les dépendances (`pywin32`, `reques
 
 ### Version autonome (o2s.exe, sans uv ni Python)
 
-Pour un poste où l'on ne peut rien installer, ou pour donner l'outil à un collègue :
+**Le plus simple : télécharger le zip prêt à l'emploi** dans les [Releases](https://github.com/PierreB2S/Outlook2Scheduler/releases/latest) (`Outlook2Scheduler-vX.Y.Z.zip`), le décompresser puis double-cliquer sur `o2s.exe`.
+
+Publier une nouvelle version (mainteneur) : mettre à jour la version dans `src/outlook2scheduler/__init__.py`, `pyproject.toml` et `packaging/version_info.txt`, puis :
+
+```
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions lance les tests, construit l'exe sur Windows et publie la Release avec le zip. Sans étiquette, l'onglet Actions > « Construire o2s.exe » > *Run workflow* construit le zip sans rien publier.
+
+Pour le construire soi-même, sur un poste où l'on ne peut rien installer, ou pour donner l'outil à un collègue :
 
 1. Sur un PC Windows avec uv, double-clic sur **`construire-exe.bat`**. PyInstaller et les dépendances sont installés dans un environnement temporaire, depuis l'index de paquets configuré pour uv sur ce poste (PyPI ou dépôt interne d'entreprise) ; `uv.lock` et `.venv` ne sont pas modifiés. En cas d'échec de téléchargement, le script affiche les variables proxy/uv utiles au diagnostic.
 2. Il produit `dist\Outlook2Scheduler.zip` (environ 11 Mo) : `o2s.exe`, son dossier `_internal`, `o2s-actualiser.bat`, `config.example.toml` et `LISEZMOI.txt`.
