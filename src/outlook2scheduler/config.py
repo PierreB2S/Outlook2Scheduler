@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +15,7 @@ CLES = {
     "nom": str,
     "mot_de_passe": str,
     "heures": (list, str),
+    "heures_par_jour": dict,
     "jours_exclus": (list, str),
     "provisoire_libre": bool,
     "ailleurs_libre": bool,
@@ -29,6 +30,8 @@ class Config:
     nom: str = ""
     mot_de_passe: str = ""
     heures: list[str] | str = "08:30-18:00"  # une plage, ou plusieurs pour exclure la pause de midi
+    # Plages propres à certains jours, ex. {"ven": "08:00-12:00"} ; les autres jours gardent « heures ».
+    heures_par_jour: dict[str, Any] = field(default_factory=dict)
     jours_exclus: list[str] | str = ("sam", "dim")  # type: ignore[assignment]
     provisoire_libre: bool = False
     ailleurs_libre: bool = True

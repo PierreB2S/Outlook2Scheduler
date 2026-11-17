@@ -18,7 +18,7 @@ from outlook2scheduler.cibles.base import CibleSondage
 from outlook2scheduler.config import Config, charger
 from outlook2scheduler.erreurs import ErreurUtilisateur
 from outlook2scheduler.registre import Registre
-from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_jours
+from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_heures_par_jour, parse_jours
 from outlook2scheduler.sources.base import AILLEURS, PAS_SECONDES, GrilleAgenda, SourceAgenda
 from outlook2scheduler.temps import JOURS_COURTS, Fuseau, FuseauSysteme, minuit
 
@@ -131,11 +131,14 @@ def construire_parser() -> argparse.ArgumentParser:
 
 def regles_depuis(config: Config, args: argparse.Namespace) -> Regles:
     plages = parse_heures(args.heures or config.heures)
+    # --heures en ligne de commande s'applique à tous les jours (exceptions du config.toml ignorées).
+    par_jour = {} if args.heures else parse_heures_par_jour(config.heures_par_jour)
     jours = parse_jours(args.jours_exclus if args.jours_exclus is not None else config.jours_exclus)
     provisoire = config.provisoire_libre if args.provisoire_libre is None else args.provisoire_libre
     marge = config.marge_minutes if args.marge_minutes is None else args.marge_minutes
     return Regles(
         plages=plages,
+        plages_par_jour=par_jour,
         jours_exclus=jours,
         provisoire_libre=provisoire,
         ailleurs_libre=config.ailleurs_libre,

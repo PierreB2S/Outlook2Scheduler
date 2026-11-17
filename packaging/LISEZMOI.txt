@@ -10,7 +10,8 @@ Première fois
 1. Décompressez le dossier où vous voulez (par ex. Documents\Outlook2Scheduler).
    Gardez o2s.exe et le dossier _internal ensemble.
 2. Facultatif : copiez config.example.toml en config.toml et mettez-y votre
-   nom et votre plage horaire (sinon le nom est demandé).
+   nom et votre plage horaire (sinon le nom est demandé). Pause de midi et
+   horaires différents selon le jour : voir les commentaires de ce fichier.
 
 Utilisation
 -----------

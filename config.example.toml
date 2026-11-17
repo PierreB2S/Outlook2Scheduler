@@ -7,9 +7,10 @@ nom = "Prénom N."
 # Mot de passe When2meet (facultatif, propre à chaque sondage ; laisser vide en général)
 mot_de_passe = ""
 
-# Plage horaire acceptée (heure de ce poste).
+# Plage horaire acceptée (heure de ce poste), la même pour tous les jours.
 # Plusieurs plages séparées par une virgule, par ex. pour exclure la pause de midi :
 #   heures = "08:00-12:00, 14:00-18:00"
+# Pour des horaires différents selon le jour : section [heures_par_jour] en fin de fichier.
 heures = "08:30-18:00"
 
 # Jours jamais proposés : lun, mar, mer, jeu, ven, sam, dim (ou [] pour aucun)
@@ -32,3 +33,11 @@ source_agenda = "rendez-vous"
 
 # Accès Internet : "windows" (comme Edge, gère le proxy d'entreprise ; défaut) ou "python"
 reseau = "windows"
+
+# Horaires propres à certains jours (facultatif). Les jours non listés gardent « heures ».
+# Jours : lun, mar, mer, jeu, ven, sam, dim. "aucune" = jamais disponible ce jour-là.
+# Cette section doit rester À LA FIN du fichier : tout ce qui la suit serait lu comme un jour.
+# Retirez les # devant les lignes à utiliser :
+# [heures_par_jour]
+# mer = "08:00-12:00"
+# ven = "08:00-12:00, 13:30-16:00"

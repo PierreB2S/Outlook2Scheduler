@@ -3,7 +3,7 @@ from datetime import datetime, time
 import pytest
 
 from outlook2scheduler.erreurs import ErreurConfig
-from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_jours
+from outlook2scheduler.regles import Motif, Regles, evaluer, parse_heures, parse_heures_par_jour, parse_jours
 from outlook2scheduler.sources.base import ABSENT, AILLEURS, LIBRE, OCCUPE, PROVISOIRE, GrilleAgenda
 
 # Lundi 2 novembre 2026
@@ -132,3 +132,37 @@ def test_parse_jours():
     assert parse_jours("aucun") == frozenset()
     with pytest.raises(ErreurConfig):
         parse_jours("samedimanche")
+
+
+def test_parse_heures_par_jour():
+    assert parse_heures_par_jour({}) == {}
+    assert parse_heures_par_jour({"ven": "08:00-12:00", "Mercredi": ["14:00-16:00", "09:00-11:00"]}) == {
+        4: ((time(8), time(12)),),
+        2: ((time(9), time(11)), (time(14), time(16))),
+    }
+    assert parse_heures_par_jour({"jeu": "aucune", "mar": ""}) == {3: (), 1: ()}
+    for faux in [{"vend": "08:00-12:00"}, {"ven": "8-12"}, {"ven": 8}]:
+        with pytest.raises(ErreurConfig):
+            parse_heures_par_jour(faux)
+
+
+def test_plage_propre_au_vendredi(fuseau):
+    vendredi = (2026, 11, 6)
+    regles = {
+        "plages": parse_heures("08:00-12:00, 14:00-18:00"),
+        "plages_par_jour": parse_heures_par_jour({"ven": "08:00-12:00", "mer": "aucune"}),
+    }
+    # Lundi : plages de la semaine.
+    g = grille_journee(fuseau)
+    assert un(fuseau, g, 15, **regles).libre
+    # Vendredi : le matin seulement.
+    g = grille_journee(fuseau, vendredi)
+    assert un(fuseau, g, 11, 45, jour=vendredi, **regles).libre
+    assert un(fuseau, g, 15, jour=vendredi, **regles).motif is Motif.HORS_PLAGE
+    # Mercredi « aucune » : jamais disponible.
+    mercredi = (2026, 11, 4)
+    g = grille_journee(fuseau, mercredi)
+    assert un(fuseau, g, 10, jour=mercredi, **regles).motif is Motif.HORS_PLAGE
+
+    texte = Regles(**regles).decrire()
+    assert "08:00-12:00, 14:00-18:00 (sauf mer aucune ; ven 08:00-12:00)" in texte

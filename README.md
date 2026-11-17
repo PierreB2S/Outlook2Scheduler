@@ -94,6 +94,18 @@ o2s.bat --oublier          # demande lequel retirer (ou : --oublier 2, --oublier
 
 Plage horaire : `heures = "08:30-18:00"` dans `config.toml`. Pour exclure la pause de midi, mettez plusieurs plages séparées par une virgule : `heures = "08:00-12:00, 14:00-18:00"` (ou `--heures "08:00-12:00,14:00-18:00"`).
 
+Horaires différents selon le jour : ajoutez **à la fin** de `config.toml` une section `[heures_par_jour]`. Les jours non listés gardent `heures`, et `"aucune"` rend un jour indisponible :
+
+```toml
+heures = "08:00-12:00, 14:00-18:00"   # tous les jours...
+
+[heures_par_jour]                      # ...sauf ceux-ci (section en fin de fichier)
+mer = "08:00-12:00"
+ven = "08:00-12:00, 13:30-16:00"
+```
+
+`--heures` en ligne de commande s'applique à tous les jours et ignore cette section.
+
 Un créneau de 15 min est « libre » s'il est entièrement dans une des plages horaires, hors jours exclus, et qu'Outlook le donne libre sur toute sa durée (et sur la marge éventuelle). « Provisoire » est occupé par défaut, « absent » toujours occupé, « travaille ailleurs » libre par défaut (`ailleurs_libre`).
 
 ## Limites

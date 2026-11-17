@@ -187,7 +187,7 @@ wheels = [
 
 [[package]]
 name = "outlook2scheduler"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32'" },

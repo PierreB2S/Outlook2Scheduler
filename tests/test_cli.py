@@ -271,3 +271,44 @@ def test_alerte_teletravail_avec_freebusy(fuseau, tmp_path, monkeypatch, argv, a
     ])
     executer([URL, *argv], m.dep)
     assert ("12 créneau(x) libre(s) dans des blocs « travaille ailleurs »" in m.texte) is alerte
+
+
+@pytest.mark.parametrize("ligne_heures_par_jour", [
+    '[heures_par_jour]\nlun = "11:00-12:00"\n',             # table en fin de fichier
+    'heures_par_jour = { lun = "11:00-12:00" }\n',           # table en ligne
+])
+def test_configuration_heures_par_jour(fuseau, tmp_path, monkeypatch, ligne_heures_par_jour):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.toml").write_text(
+        f'nom = "N"\nheures = "09:00-15:00"\n{ligne_heures_par_jour}', encoding="utf-8"
+    )
+    lundi, mardi = date(2026, 11, 2), date(2026, 11, 3)
+    epochs = epochs_sondage(fuseau, [lundi, mardi], time(11), time(12))  # 4 + 4 créneaux
+    m = Monde(fuseau, epochs, reponses=["O"])
+    executer([URL, "--submit"], m.dep)
+    assert m.envois()[0]["availability"] == "1111" + "1111"
+
+    # Lundi restreint à 11:30-12:00 : seuls ses deux derniers créneaux restent libres, mardi inchangé.
+    (tmp_path / "config.toml").write_text(
+        f'nom = "N"\nheures = "09:00-15:00"\n{ligne_heures_par_jour.replace("11:00-12:00", "11:30-12:00")}',
+        encoding="utf-8",
+    )
+    m = Monde(fuseau, epochs, reponses=["O"])
+    executer([URL, "--submit"], m.dep)
+    assert m.envois()[0]["availability"] == "0011" + "1111"
+
+
+def test_heures_en_ligne_de_commande_pour_tous_les_jours(fuseau, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.toml").write_text('nom = "N"\n[heures_par_jour]\nlun = "aucune"\n', encoding="utf-8")
+    epochs = epochs_sondage(fuseau, [date(2026, 11, 2)], time(11), time(12))
+    m = Monde(fuseau, epochs, reponses=["O"])
+    executer([URL, "--submit", "--heures", "11:00-12:00"], m.dep)
+    assert m.envois()[0]["availability"] == "1111"
+
+
+def test_section_par_jour_mal_placee_explique(fuseau, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.toml").write_text('[heures_par_jour]\nven = "08:00-12:00"\nmarge_minutes = 15\n', encoding="utf-8")
+    with pytest.raises(ErreurConfig, match="doit être à la fin"):
+        executer([URL], Monde(fuseau, []).dep)

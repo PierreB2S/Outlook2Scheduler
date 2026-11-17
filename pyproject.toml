@@ -1,6 +1,6 @@
 [project]
 name = "outlook2scheduler"
-version = "0.1.0"
+version = "0.2.0"
 description = "Remplit les sondages de planification (When2meet, puis Framadate/Doodle) depuis l'agenda Outlook, grille libre/occupé uniquement"
 readme = "README.md"
 license = "MIT"

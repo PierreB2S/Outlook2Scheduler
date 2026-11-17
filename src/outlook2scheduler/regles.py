@@ -37,6 +37,8 @@ Plage = tuple[time, time]  # (début, fin) ; fin = time(0) signifie minuit (24:0
 class Regles:
     # Plages horaires acceptées, ex. ((8h, 12h), (14h, 18h)) pour exclure la pause de midi.
     plages: tuple[Plage, ...] = ((time(8, 30), time(18, 0)),)
+    # Exceptions par jour de la semaine (0 = lundi) ; les jours absents utilisent « plages ».
+    plages_par_jour: dict[int, tuple[Plage, ...]] = field(default_factory=dict)
     jours_exclus: frozenset[int] = field(default_factory=lambda: frozenset({5, 6}))
     provisoire_libre: bool = False
     ailleurs_libre: bool = True
@@ -45,7 +47,7 @@ class Regles:
     def __post_init__(self) -> None:
         if not self.plages:
             raise ErreurConfig("Aucune plage horaire définie (ex. heures = \"08:30-18:00\").")
-        for debut, fin in self.plages:
+        for debut, fin in [*self.plages, *(p for ps in self.plages_par_jour.values() for p in ps)]:
             if fin <= debut and fin != time(0):
                 raise ErreurConfig(
                     f"Plage horaire vide : {debut:%H:%M}-{fin:%H:%M} "
@@ -56,14 +58,50 @@ class Regles:
 
     def decrire(self) -> str:
         jours = ", ".join(k for k, v in NOMS_JOURS.items() if len(k) == 3 and v in self.jours_exclus)
+        horaires = _texte(self.plages)
+        if self.plages_par_jour:
+            exceptions = [
+                f"{JOURS_ABREGES[j]} {_texte(ps) or 'aucune'}"
+                for j, ps in sorted(self.plages_par_jour.items())
+                if j not in self.jours_exclus
+            ]
+            if exceptions:
+                horaires += f" (sauf {' ; '.join(exceptions)})"
         morceaux = [
-            ", ".join(f"{d:%H:%M}-{'24:00' if f == time(0) else format(f, '%H:%M')}" for d, f in self.plages),
+            horaires,
             f"jours exclus : {jours or 'aucun'}",
             f"provisoire = {'libre' if self.provisoire_libre else 'occupé'}",
         ]
         if self.marge_minutes:
             morceaux.append(f"marge {self.marge_minutes} min avant/après")
         return " | ".join(morceaux)
+
+
+JOURS_ABREGES = {v: k for k, v in NOMS_JOURS.items() if len(k) == 3}
+
+
+def _texte(plages: tuple[Plage, ...]) -> str:
+    return ", ".join(f"{d:%H:%M}-{'24:00' if f == time(0) else format(f, '%H:%M')}" for d, f in plages)
+
+
+def parse_heures_par_jour(valeur: dict) -> dict[int, tuple[Plage, ...]]:
+    """{"ven": "08:00-12:00", "mer": "aucune"} -> {4: ((8h, 12h),), 2: ()}."""
+    resultat: dict[int, tuple[Plage, ...]] = {}
+    for brut, plages in valeur.items():
+        cle = str(brut).strip().lower().rstrip(".")
+        if cle not in NOMS_JOURS:
+            raise ErreurConfig(
+                f"Jour inconnu dans heures_par_jour : {brut!r} (utilisez lun, mar, mer, jeu, ven, sam, dim). "
+                "Si c'est un réglage général, la section [heures_par_jour] doit être à la fin "
+                "de config.toml : tout ce qui la suit est lu comme un jour."
+            )
+        if not isinstance(plages, (str, list)):
+            raise ErreurConfig(f"Valeur invalide pour {brut!r} dans heures_par_jour : {plages!r}.")
+        if isinstance(plages, str) and plages.strip().lower() in {"", "aucune", "aucun"}:
+            resultat[NOMS_JOURS[cle]] = ()  # disponible à aucun moment ce jour-là
+        else:
+            resultat[NOMS_JOURS[cle]] = parse_heures(plages)
+    return resultat
 
 
 def parse_plage(texte: str) -> Plage:
@@ -166,7 +204,8 @@ def _minutes(t: time) -> int:
 def _dans_plage(debut: datetime, duree_s: int, regles: Regles) -> bool:
     d = _minutes(debut.time())
     f = d + duree_s // 60
-    return any(d >= _minutes(p_debut) and f <= (_minutes(p_fin) or 24 * 60) for p_debut, p_fin in regles.plages)
+    plages = regles.plages_par_jour.get(debut.weekday(), regles.plages)
+    return any(d >= _minutes(p_debut) and f <= (_minutes(p_fin) or 24 * 60) for p_debut, p_fin in plages)
 
 
 def _quarts(debut: int, fin: int) -> range:
